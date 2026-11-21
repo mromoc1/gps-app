@@ -16,3 +16,5 @@ key.properties
 pubspec.lock
 .idea/
 .vscode/
+__pycache__/
+*.pyc
