@@ -14,6 +14,19 @@ y sube en cada compilación. Cada APK publicado se etiqueta como
 Cada versión necesita su sección `## X.Y.Z` en este archivo: sin ella la
 compilación falla. El texto de la sección aparece como "Novedades" en el release.
 
+## 0.3.0 – 2026-11-21
+
+- Nueva pantalla **Probar mapas** (Perfil → Aplicación → Probar mapas):
+  cada proveedor a pantalla completa con tus vehículos, con flechas para pasar
+  de uno a otro y una ficha con sus condiciones de uso.
+- Sin clave: OpenStreetMap, OpenTopoMap, CARTO (Voyager, Claro, Oscuro) y
+  Esri (Satélite, Satélite con nombres, Calles).
+- Con clave, que se ingresa dentro de la app: MapTiler (Calles, Satélite
+  híbrido, Oscuro), Mapbox (Calles, Satélite con calles) y Stadia Maps
+  (Alidade Smooth y Oscuro).
+- Google Maps aparece listado; se probará en una versión aparte porque usa
+  otra librería.
+
 ## 0.2.2 – 2026-11-21
 
 - Diseño: botones, tarjetas, barra de navegación, menús, diálogos y paneles

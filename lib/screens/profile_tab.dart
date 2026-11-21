@@ -5,6 +5,7 @@ import '../brand.dart';
 import '../config.dart';
 import '../widgets.dart';
 import 'login_screen.dart';
+import 'maps_lab_screen.dart';
 
 /// Pestaña Perfil: cuenta, versión de la app y cómo está construida.
 class ProfileTab extends StatelessWidget {
@@ -135,6 +136,13 @@ class ProfileTab extends StatelessWidget {
                       if (kAppCommit.isNotEmpty) 'Código $kAppCommit',
                     ].join(' · ')),
                   ),
+                ListTile(
+                  leading: const Icon(Icons.layers_outlined),
+                  title: const Text('Probar mapas'),
+                  subtitle: const Text('Ver cada proveedor de mapas con tus vehículos'),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () => openMapsLab(context),
+                ),
                 ListTile(
                   leading: const Icon(Icons.description_outlined),
                   title: const Text('Licencias de software'),

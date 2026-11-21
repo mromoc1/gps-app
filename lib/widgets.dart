@@ -20,7 +20,8 @@ List<Widget> baseMapLayers() => [
 
 /// Atribución de OpenStreetMap, ubicada a mano para no quedar bajo la barra.
 class MapCredit extends StatelessWidget {
-  const MapCredit({super.key});
+  final String text;
+  const MapCredit({super.key, this.text = '© OpenStreetMap'});
 
   @override
   Widget build(BuildContext context) {
@@ -30,8 +31,8 @@ class MapCredit extends StatelessWidget {
         color: Colors.white.withValues(alpha: 0.85),
         borderRadius: BorderRadius.circular(6),
       ),
-      child: const Text('© OpenStreetMap',
-          style: TextStyle(fontSize: 10, color: Colors.black87)),
+      child: Text(text,
+          style: const TextStyle(fontSize: 10, color: Colors.black87)),
     );
   }
 }
