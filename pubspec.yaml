@@ -1,0 +1,32 @@
+name: alerto_gps
+description: Alerto GPS - prototipo de app para clientes (conectada a Traccar).
+publish_to: 'none'
+version: 0.1.0+1
+
+environment:
+  sdk: '>=3.4.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+  intl: any
+  http: ^1.2.2
+  web_socket_channel: ^3.0.1
+  shared_preferences: ^2.3.3
+  flutter_map: ^7.0.2
+  latlong2: ^0.9.1
+
+dev_dependencies:
+  flutter_launcher_icons: ^0.14.1
+
+flutter:
+  uses-material-design: true
+
+flutter_launcher_icons:
+  android: true
+  ios: false
+  image_path: "assets/icon.png"
+  adaptive_icon_background: "#12355B"
+  adaptive_icon_foreground: "assets/icon_fg.png"

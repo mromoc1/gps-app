@@ -1,0 +1,65 @@
+name: Compilar APK
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Versión de Flutter
+        run: flutter --version
+
+      - name: Generar proyecto Android
+        run: |
+          flutter create --org cl.alerto --project-name alerto_gps --platforms android .
+          rm -rf test
+          python3 tool/patch_android.py
+
+      - name: Dependencias
+        run: flutter pub get
+
+      - name: Ícono de la app
+        run: dart run flutter_launcher_icons
+
+      - name: Revisar código
+        run: flutter analyze lib --no-fatal-infos --no-fatal-warnings
+
+      - name: Llave de firma
+        env:
+          KEYSTORE_B64: ${{ secrets.DEBUG_KEYSTORE_B64 }}
+        run: |
+          if [ -n "$KEYSTORE_B64" ]; then
+            mkdir -p ~/.android
+            echo "$KEYSTORE_B64" | base64 -d > ~/.android/debug.keystore
+            echo "Usando la llave fija del proyecto"
+          else
+            echo "Sin llave fija: se usará una temporal (habrá que desinstalar para actualizar)"
+          fi
+
+      - name: Compilar APK
+        run: flutter build apk --release
+
+      - name: Preparar archivo
+        run: cp build/app/outputs/flutter-apk/app-release.apk alerto-gps.apk
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: alerto-gps-apk
+          path: alerto-gps.apk
+          retention-days: 30
