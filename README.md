@@ -84,7 +84,7 @@ El APK se firma con la llave oficial guardada en los secretos del repo:
 | `ANDROID_KEYSTORE_B64` | La llave `gps-app-release.jks` en base64 |
 | `ANDROID_KEYSTORE_PASSWORD` | La clave de la llave |
 
-Sin esos secretos el APK sale con firma de depuración y el release lo indica.
+Sin esos secretos la publicación se detiene, y también si el APK no queda firmado con la llave oficial.
 **Guarda una copia de la llave y su clave fuera de GitHub**: si se pierde,
 no se podrán publicar actualizaciones en Google Play con la misma app.
 

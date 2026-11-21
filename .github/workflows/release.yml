@@ -19,6 +19,8 @@ concurrency:
 
 env:
   KEEP_RELEASES: 10
+  # Huella SHA-256 del certificado oficial de GPS App (no es secreta).
+  EXPECTED_CERT: 372fc8a88d1edc0649dd460676d9e961ada3dd2cd73cb1f8c0aba0a81235ef97
   REPO_URL: https://github.com/${{ github.repository }}
 
 jobs:
@@ -72,8 +74,8 @@ jobs:
             echo "SIGNING=oficial" >> "$GITHUB_ENV"
             echo "Firma: llave oficial"
           else
-            echo "SIGNING=depuracion" >> "$GITHUB_ENV"
-            echo "::warning::Faltan los secretos ANDROID_KEYSTORE_B64 y ANDROID_KEYSTORE_PASSWORD: el APK se firma con una llave de depuración."
+            echo "::error::Faltan los secretos ANDROID_KEYSTORE_B64 y ANDROID_KEYSTORE_PASSWORD. No se publica sin la firma oficial."
+            exit 1
           fi
 
       - name: Compilar APK
@@ -105,6 +107,10 @@ jobs:
             CERT=$(grep -m1 'SHA-256 digest' cert.txt | sed 's/.*: //')
           fi
           echo "CERT=$CERT" >> "$GITHUB_ENV"
+          if [ -n "$CERT" ] && [ "$CERT" != "$EXPECTED_CERT" ]; then
+            echo "::error::El APK no quedó firmado con la llave oficial ($CERT)."
+            exit 1
+          fi
 
       - name: Notas del release
         run: |
