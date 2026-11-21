@@ -9,7 +9,21 @@ El número de versión sigue el formato `MAYOR.MENOR.PARCHE`
 
 El **número de compilación** lo pone GitHub Actions solo (`github.run_number`)
 y sube en cada compilación. Cada APK publicado se etiqueta como
-`v<versión>-b<compilación>`, por ejemplo `v0.2.0-b3`.
+`v<versión>-b<compilación>`, por ejemplo `v0.2.1-b4`.
+
+Cada versión necesita su sección `## X.Y.Z` en este archivo: sin ella la
+compilación falla. El texto de la sección aparece como "Novedades" en el release.
+
+## 0.2.1 – 2026-11-21
+
+- Publicación oficial: cada versión queda en Releases con notas de cambios,
+  checksum SHA-256 y huella de la firma.
+- Enlace fijo que siempre descarga la última versión:
+  `https://github.com/mromoc1/gps-app/releases/latest/download/gps-app.apk`
+- Firma oficial de la app: desde esta versión las actualizaciones se instalan
+  encima de la anterior. Hay que desinstalar una última vez la 0.2.0.
+- Revisión automática en ramas y pull requests, sin publicar.
+- Plantillas para reportar fallas y sugerir mejoras.
 
 ## 0.2.0 – 2026-11-21
 

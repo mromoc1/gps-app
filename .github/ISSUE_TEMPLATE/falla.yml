@@ -1,0 +1,44 @@
+name: Reportar una falla
+description: Algo no funciona como debería en la app o con el GPS
+title: "[Falla] "
+labels: [falla]
+body:
+  - type: markdown
+    attributes:
+      value: Gracias por reportar. Mientras más detalle, más rápido se corrige.
+  - type: input
+    id: version
+    attributes:
+      label: Versión de la app
+      description: Está en Perfil → Aplicación (por ejemplo "Versión 0.2.1 (compilación 5)").
+    validations:
+      required: true
+  - type: input
+    id: vehiculo
+    attributes:
+      label: Vehículo
+      description: Nombre del vehículo en la app.
+  - type: dropdown
+    id: pantalla
+    attributes:
+      label: ¿Dónde pasó?
+      options: [Mapa, Vehículos, Alertas, Perfil, Detalle del vehículo, Historial, Corte de motor, Inicio de sesión, Otro]
+    validations:
+      required: true
+  - type: textarea
+    id: que_paso
+    attributes:
+      label: ¿Qué pasó?
+      description: Qué hiciste, qué esperabas y qué ocurrió. Indica fecha y hora aproximada.
+    validations:
+      required: true
+  - type: textarea
+    id: capturas
+    attributes:
+      label: Capturas de pantalla
+      description: Arrastra aquí las imágenes si tienes.
+  - type: input
+    id: celular
+    attributes:
+      label: Celular y versión de Android
+      placeholder: Ej. Samsung A54, Android 14

@@ -1,0 +1,15 @@
+name: Sugerir una mejora
+description: Una idea o función nueva para la app
+title: "[Mejora] "
+labels: [mejora]
+body:
+  - type: textarea
+    id: idea
+    attributes:
+      label: ¿Qué te gustaría?
+    validations:
+      required: true
+  - type: textarea
+    id: para_que
+    attributes:
+      label: ¿Para qué te serviría?

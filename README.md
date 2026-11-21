@@ -32,8 +32,9 @@ lib/
   widgets.dart         marcadores y componentes
   screens/             login, inicio (pestañas), mapa, vehículos, alertas,
                        perfil, detalle, historial, eventos
-tool/patch_android.py  permiso de internet y nombre de la app
-.github/workflows/     compilación del APK en GitHub Actions
+tool/                  preparar Android, firma, versión y notas de release
+.github/workflows/     release.yml (publicar) y ci.yml (revisión)
+.github/ISSUE_TEMPLATE plantillas de fallas y mejoras
 ```
 
 La carpeta `android/` no se guarda en el repo: la genera `flutter create`
@@ -49,20 +50,51 @@ el número de compilación lo asigna GitHub Actions.
 Flutter y Dart · flutter_map con OpenStreetMap · http y web_socket_channel ·
 shared_preferences · Traccar como servidor GPS.
 
-## Compilar
+## Descargar
 
-Cada push a `main` compila el APK en GitHub Actions
-(pestaña **Releases**, o **Actions → Compilar APK → Artifacts**).
+Enlace fijo a la última versión (requiere sesión de GitHub con acceso al repo):
 
-Para que las actualizaciones se instalen encima de la versión anterior, el
-secreto `DEBUG_KEYSTORE_B64` del repo debe tener siempre la misma llave de firma.
+**https://github.com/mromoc1/gps-app/releases/latest/download/gps-app.apk**
 
-En local:
+<img src="docs/descarga-qr.png" alt="QR de descarga" width="180">
+
+Todas las versiones, con sus notas, checksum y firma, están en
+[Releases](https://github.com/mromoc1/gps-app/releases). Se guardan las últimas 10.
+
+## Cómo publicar una versión
+
+1. Trabaja en una rama y abre un pull request: la **Revisión** automática
+   analiza el código, revisa el CHANGELOG y deja un APK de prueba en Checks.
+2. Sube la versión en `pubspec.yaml` (`version: X.Y.Z+1`).
+3. Agrega la sección `## X.Y.Z – fecha` en `CHANGELOG.md`.
+4. Une a `main`. **Publicar versión** compila, firma, arma las notas
+   (novedades del CHANGELOG + commits) y publica el release con:
+   - `gps-app-vX.Y.Z-bN.apk` (versión exacta)
+   - `gps-app.apk` (el del enlace fijo)
+   - `.sha256` (checksum)
+
+También se puede lanzar a mano desde **Actions → Publicar versión → Run workflow**.
+
+## Firma
+
+El APK se firma con la llave oficial guardada en los secretos del repo:
+
+| Secreto | Contenido |
+| --- | --- |
+| `ANDROID_KEYSTORE_B64` | La llave `gps-app-release.jks` en base64 |
+| `ANDROID_KEYSTORE_PASSWORD` | La clave de la llave |
+
+Sin esos secretos el APK sale con firma de depuración y el release lo indica.
+**Guarda una copia de la llave y su clave fuera de GitHub**: si se pierde,
+no se podrán publicar actualizaciones en Google Play con la misma app.
+
+## Reportar fallas
+
+En **Issues → New issue** hay plantillas para reportar una falla o sugerir una mejora.
+
+## Compilar en local
 
 ```
-flutter create --org cl.gpsapp --project-name gps_app --platforms android .
-python3 tool/patch_android.py
-flutter pub get
-dart run flutter_launcher_icons
+./tool/prepare_android.sh
 flutter build apk --release
 ```
