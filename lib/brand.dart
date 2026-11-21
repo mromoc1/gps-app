@@ -3,6 +3,14 @@ import 'package:flutter/material.dart';
 const Color kBrandNavy = Color(0xFF12355B);
 const Color kBrandOrange = Color(0xFFF28C28);
 
+/// Esquinas semicurvas, iguales en toda la app.
+const double kRadiusButton = 10;
+const double kRadiusCard = 12;
+const double kRadiusSheet = 16;
+
+RoundedRectangleBorder roundedShape(double r) =>
+    RoundedRectangleBorder(borderRadius: BorderRadius.circular(r));
+
 class BrandLogo extends StatelessWidget {
   final double size;
   const BrandLogo({super.key, this.size = 72});

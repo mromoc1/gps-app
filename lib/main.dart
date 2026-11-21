@@ -39,8 +39,41 @@ class GpsApp extends StatelessWidget {
         useMaterial3: true,
         colorScheme: scheme,
         appBarTheme: const AppBarTheme(centerTitle: false),
-        inputDecorationTheme: const InputDecorationTheme(
-          border: OutlineInputBorder(),
+        inputDecorationTheme: InputDecorationTheme(
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(kRadiusButton),
+          ),
+        ),
+        filledButtonTheme: FilledButtonThemeData(
+          style: FilledButton.styleFrom(shape: roundedShape(kRadiusButton)),
+        ),
+        outlinedButtonTheme: OutlinedButtonThemeData(
+          style: OutlinedButton.styleFrom(shape: roundedShape(kRadiusButton)),
+        ),
+        textButtonTheme: TextButtonThemeData(
+          style: TextButton.styleFrom(shape: roundedShape(kRadiusButton)),
+        ),
+        elevatedButtonTheme: ElevatedButtonThemeData(
+          style: ElevatedButton.styleFrom(shape: roundedShape(kRadiusButton)),
+        ),
+        floatingActionButtonTheme: FloatingActionButtonThemeData(
+          shape: roundedShape(kRadiusCard),
+        ),
+        cardTheme: CardThemeData(shape: roundedShape(kRadiusCard)),
+        navigationBarTheme: NavigationBarThemeData(
+          indicatorShape: roundedShape(kRadiusButton),
+        ),
+        popupMenuTheme: PopupMenuThemeData(shape: roundedShape(kRadiusButton)),
+        dialogTheme: DialogThemeData(shape: roundedShape(kRadiusSheet)),
+        bottomSheetTheme: const BottomSheetThemeData(
+          shape: RoundedRectangleBorder(
+            borderRadius:
+                BorderRadius.vertical(top: Radius.circular(kRadiusSheet)),
+          ),
+        ),
+        snackBarTheme: SnackBarThemeData(
+          behavior: SnackBarBehavior.floating,
+          shape: roundedShape(kRadiusButton),
         ),
       ),
       home: const StartScreen(),

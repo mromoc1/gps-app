@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 
+import 'brand.dart';
 import 'config.dart';
 import 'models.dart';
 import 'util.dart';
@@ -59,7 +60,7 @@ class MapButton extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
     return Material(
       color: scheme.surface,
-      shape: const CircleBorder(),
+      shape: roundedShape(kRadiusCard),
       elevation: 3,
       child: IconButton(
         tooltip: tooltip,
@@ -96,7 +97,7 @@ class DeviceCard extends StatelessWidget {
     return Card(
       margin: EdgeInsets.zero,
       child: InkWell(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(kRadiusCard),
         onTap: onTap,
         child: Padding(
           padding: const EdgeInsets.all(14),

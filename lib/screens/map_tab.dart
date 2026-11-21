@@ -169,7 +169,7 @@ class _TopPill extends StatelessWidget {
     return Material(
       color: t.colorScheme.surface,
       elevation: 3,
-      borderRadius: BorderRadius.circular(24),
+      borderRadius: BorderRadius.circular(kRadiusCard),
       child: Padding(
         padding: const EdgeInsets.fromLTRB(6, 6, 14, 6),
         child: Row(

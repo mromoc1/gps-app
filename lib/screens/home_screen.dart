@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../api.dart';
+import '../brand.dart';
 import '../widgets.dart';
 import 'alerts_tab.dart';
 import 'map_tab.dart';
@@ -79,14 +80,14 @@ class _FloatingNavBar extends StatelessWidget {
       minimum: const EdgeInsets.fromLTRB(12, 0, 12, 12),
       child: DecoratedBox(
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(24),
+          borderRadius: BorderRadius.circular(kRadiusSheet),
           boxShadow: const [
             BoxShadow(
                 blurRadius: 16, color: Colors.black26, offset: Offset(0, 4)),
           ],
         ),
         child: ClipRRect(
-          borderRadius: BorderRadius.circular(24),
+          borderRadius: BorderRadius.circular(kRadiusSheet),
           child: MediaQuery.removePadding(
             context: context,
             removeBottom: true,

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 
 import '../api.dart';
+import '../brand.dart';
 import '../models.dart';
 import '../util.dart';
 import '../widgets.dart';
@@ -193,7 +194,8 @@ class _DeviceScreenState extends State<DeviceScreen> {
     return Material(
       color: t.colorScheme.surface,
       elevation: 8,
-      borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+      borderRadius: const BorderRadius.vertical(
+          top: Radius.circular(kRadiusSheet)),
       child: ListView(
         controller: scroll,
         padding: EdgeInsets.fromLTRB(
@@ -374,7 +376,7 @@ class _StatusHeader extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
           decoration: BoxDecoration(
             color: statusColor(device.status).withValues(alpha: 0.12),
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(8),
           ),
           child: Text(statusLabel(device.status),
               style: TextStyle(

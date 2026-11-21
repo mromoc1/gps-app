@@ -14,6 +14,13 @@ y sube en cada compilación. Cada APK publicado se etiqueta como
 Cada versión necesita su sección `## X.Y.Z` en este archivo: sin ella la
 compilación falla. El texto de la sección aparece como "Novedades" en el release.
 
+## 0.2.2 – 2026-11-21
+
+- Diseño: botones, tarjetas, barra de navegación, menús, diálogos y paneles
+  con esquinas semicurvas (antes algunos eran completamente redondos).
+- Los botones del mapa pasan de círculos a cuadrados con esquinas suaves.
+- Los avisos aparecen flotando sobre la barra inferior.
+
 ## 0.2.1 – 2026-11-21
 
 - Publicación oficial: cada versión queda en Releases con notas de cambios,
