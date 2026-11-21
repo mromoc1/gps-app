@@ -139,13 +139,11 @@ class _DeviceScreenState extends State<DeviceScreen> {
           );
         }
         _maybeFollow(p);
+        final top = MediaQuery.of(context).padding.top;
         return Scaffold(
-          appBar: AppBar(title: Text(d.name)),
-          body: ListView(
-            padding: EdgeInsets.zero,
+          body: Stack(
             children: [
-              SizedBox(
-                height: MediaQuery.of(context).size.height * 0.38,
+              Positioned.fill(
                 child: p == null
                     ? const CenteredMessage(
                         icon: Icons.location_off_outlined,
@@ -153,82 +151,35 @@ class _DeviceScreenState extends State<DeviceScreen> {
                       )
                     : _buildMap(d, p),
               ),
-              Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    _StatusHeader(device: d, position: p),
-                    const SizedBox(height: 14),
-                    _buildInfo(p),
-                    const SizedBox(height: 18),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: OutlinedButton.icon(
-                            icon: const Icon(Icons.route),
-                            label: const Text('Historial'),
-                            onPressed: () => Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (_) => HistoryScreen(device: d),
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: OutlinedButton.icon(
-                            icon: const Icon(Icons.notifications_none),
-                            label: const Text('Eventos'),
-                            onPressed: () => Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (_) => EventsScreen(device: d),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 22),
-                    Text('Corte de motor',
-                        style: Theme.of(context).textTheme.titleMedium),
-                    const SizedBox(height: 8),
-                    if (_sending)
-                      const Padding(
-                        padding: EdgeInsets.symmetric(vertical: 12),
-                        child: Center(child: CircularProgressIndicator()),
-                      )
-                    else
-                      Row(
-                        children: [
-                          Expanded(
-                            child: FilledButton.icon(
-                              style: FilledButton.styleFrom(
-                                backgroundColor: Colors.red.shade700,
-                                minimumSize: const Size.fromHeight(48),
-                              ),
-                              icon: const Icon(Icons.power_settings_new),
-                              label: const Text('Cortar'),
-                              onPressed: () => _engine(d, p, true),
-                            ),
-                          ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: FilledButton.icon(
-                              style: FilledButton.styleFrom(
-                                backgroundColor: Colors.green.shade700,
-                                minimumSize: const Size.fromHeight(48),
-                              ),
-                              icon: const Icon(Icons.play_arrow),
-                              label: const Text('Reactivar'),
-                              onPressed: () => _engine(d, p, false),
-                            ),
-                          ),
-                        ],
-                      ),
-                    const SizedBox(height: 24),
-                  ],
+              Positioned(
+                top: top + 12,
+                left: 12,
+                child: MapButton(
+                  icon: Icons.arrow_back,
+                  tooltip: 'Volver',
+                  onPressed: () => Navigator.of(context).maybePop(),
                 ),
+              ),
+              if (p != null && !_follow)
+                Positioned(
+                  top: top + 12,
+                  right: 12,
+                  child: MapButton(
+                    icon: Icons.my_location,
+                    tooltip: 'Seguir vehículo',
+                    onPressed: () {
+                      setState(() => _follow = true);
+                      _map.move(p.latLng, _map.camera.zoom);
+                    },
+                  ),
+                ),
+              DraggableScrollableSheet(
+                initialChildSize: 0.42,
+                minChildSize: 0.16,
+                maxChildSize: 0.92,
+                snap: true,
+                snapSizes: const [0.42],
+                builder: (context, scroll) => _buildSheet(d, p, scroll),
               ),
             ],
           ),
@@ -237,7 +188,102 @@ class _DeviceScreenState extends State<DeviceScreen> {
     );
   }
 
+  Widget _buildSheet(Device d, Position? p, ScrollController scroll) {
+    final t = Theme.of(context);
+    return Material(
+      color: t.colorScheme.surface,
+      elevation: 8,
+      borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+      child: ListView(
+        controller: scroll,
+        padding: EdgeInsets.fromLTRB(
+            16, 0, 16, 24 + MediaQuery.of(context).padding.bottom),
+        children: [
+          Center(
+            child: Container(
+              margin: const EdgeInsets.symmetric(vertical: 10),
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: t.colorScheme.outlineVariant,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+          ),
+          Text(d.name,
+              style: t.textTheme.titleLarge
+                  ?.copyWith(fontWeight: FontWeight.w700)),
+          const SizedBox(height: 6),
+          _StatusHeader(device: d, position: p),
+          const SizedBox(height: 14),
+          _buildInfo(p),
+          const SizedBox(height: 18),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  icon: const Icon(Icons.route),
+                  label: const Text('Historial'),
+                  onPressed: () => Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => HistoryScreen(device: d)),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: OutlinedButton.icon(
+                  icon: const Icon(Icons.notifications_none),
+                  label: const Text('Eventos'),
+                  onPressed: () => Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => EventsScreen(device: d)),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 22),
+          Text('Corte de motor', style: t.textTheme.titleMedium),
+          const SizedBox(height: 8),
+          if (_sending)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 12),
+              child: Center(child: CircularProgressIndicator()),
+            )
+          else
+            Row(
+              children: [
+                Expanded(
+                  child: FilledButton.icon(
+                    style: FilledButton.styleFrom(
+                      backgroundColor: Colors.red.shade700,
+                      minimumSize: const Size.fromHeight(48),
+                    ),
+                    icon: const Icon(Icons.power_settings_new),
+                    label: const Text('Cortar'),
+                    onPressed: () => _engine(d, p, true),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: FilledButton.icon(
+                    style: FilledButton.styleFrom(
+                      backgroundColor: Colors.green.shade700,
+                      minimumSize: const Size.fromHeight(48),
+                    ),
+                    icon: const Icon(Icons.play_arrow),
+                    label: const Text('Reactivar'),
+                    onPressed: () => _engine(d, p, false),
+                  ),
+                ),
+              ],
+            ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildMap(Device d, Position p) {
+    final h = MediaQuery.of(context).size.height;
     return Stack(
       children: [
         FlutterMap(
@@ -256,23 +302,9 @@ class _DeviceScreenState extends State<DeviceScreen> {
           children: [
             ...baseMapLayers(),
             MarkerLayer(markers: [vehicleMarker(p, d.online)]),
-            mapAttribution(),
           ],
         ),
-        if (!_follow)
-          Positioned(
-            right: 12,
-            bottom: 12,
-            child: FloatingActionButton.small(
-              heroTag: 'follow',
-              tooltip: 'Seguir vehículo',
-              onPressed: () {
-                setState(() => _follow = true);
-                _map.move(p.latLng, _map.camera.zoom);
-              },
-              child: const Icon(Icons.my_location),
-            ),
-          ),
+        Positioned(left: 8, bottom: h * 0.16 + 6, child: const MapCredit()),
       ],
     );
   }

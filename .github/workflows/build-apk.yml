@@ -30,7 +30,7 @@ jobs:
 
       - name: Generar proyecto Android
         run: |
-          flutter create --org cl.alerto --project-name alerto_gps --platforms android .
+          flutter create --org cl.gpsapp --project-name gps_app --platforms android .
           rm -rf test
           python3 tool/patch_android.py
 
@@ -55,24 +55,40 @@ jobs:
             echo "Sin llave fija: se usará una temporal (habrá que desinstalar para actualizar)"
           fi
 
+      - name: Versión
+        run: |
+          VERSION=$(sed -n 's/^version: *\([0-9][0-9.]*\).*/\1/p' pubspec.yaml)
+          BUILD=${{ github.run_number }}
+          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
+          echo "BUILD=$BUILD" >> "$GITHUB_ENV"
+          echo "APK=gps-app-v$VERSION-b$BUILD.apk" >> "$GITHUB_ENV"
+          echo "Versión $VERSION, compilación $BUILD"
+
       - name: Compilar APK
-        run: flutter build apk --release
+        run: |
+          flutter build apk --release \
+            --build-name="$VERSION" \
+            --build-number="$BUILD" \
+            --dart-define=APP_VERSION="$VERSION" \
+            --dart-define=APP_BUILD="$BUILD" \
+            --dart-define=APP_COMMIT="${GITHUB_SHA::7}" \
+            --dart-define=APP_BUILD_DATE="$(date -u +%Y-%m-%d)"
 
       - name: Preparar archivo
-        run: cp build/app/outputs/flutter-apk/app-release.apk alerto-gps.apk
+        run: cp build/app/outputs/flutter-apk/app-release.apk "$APK"
 
       - uses: actions/upload-artifact@v5
         with:
-          name: alerto-gps-apk
-          path: alerto-gps.apk
+          name: gps-app-apk
+          path: ${{ env.APK }}
           retention-days: 30
 
       - name: Publicar versión descargable
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          TAG="v0.1.${{ github.run_number }}"
-          gh release create "$TAG" alerto-gps.apk \
+          TAG="v$VERSION-b$BUILD"
+          gh release create "$TAG" "$APK" \
             --prerelease \
-            --title "Alerto GPS $TAG" \
-            --notes "APK de prueba compilado desde ${GITHUB_SHA::7}. En el celular: descarga alerto-gps.apk y ábrelo para instalar."
+            --title "GPS App $VERSION (compilación $BUILD)" \
+            --notes "APK de prueba compilado desde ${GITHUB_SHA::7}. En el celular: descarga $APK y ábrelo para instalar. Cambios en CHANGELOG.md."

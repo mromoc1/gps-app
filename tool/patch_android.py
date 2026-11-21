@@ -14,6 +14,6 @@ if perm not in text:
     end = text.index(">", start) + 1
     text = text[:end] + "\n    " + perm + text[end:]
 
-text = text.replace('android:label="alerto_gps"', 'android:label="Alerto GPS"')
+text = text.replace('android:label="gps_app"', 'android:label="GPS App"')
 manifest.write_text(text, encoding="utf-8")
 print(text)

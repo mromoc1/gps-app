@@ -6,6 +6,7 @@ import 'package:latlong2/latlong.dart';
 
 import 'config.dart';
 import 'models.dart';
+import 'util.dart';
 
 /// Capa base del mapa (OpenStreetMap) con atribución.
 List<Widget> baseMapLayers() => [
@@ -16,9 +17,153 @@ List<Widget> baseMapLayers() => [
       ),
     ];
 
-Widget mapAttribution() => RichAttributionWidget(
-      attributions: [TextSourceAttribution('OpenStreetMap contributors')],
+/// Atribución de OpenStreetMap, ubicada a mano para no quedar bajo la barra.
+class MapCredit extends StatelessWidget {
+  const MapCredit({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.85),
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: const Text('© OpenStreetMap',
+          style: TextStyle(fontSize: 10, color: Colors.black87)),
     );
+  }
+}
+
+/// Espacio que ocupa la barra de navegación flotante (para no tapar contenido).
+double navBarSpace(BuildContext context) =>
+    kNavBarHeight + 20 + MediaQuery.of(context).padding.bottom;
+
+const double kNavBarHeight = 64;
+
+/// Botón redondo que flota sobre el mapa.
+class MapButton extends StatelessWidget {
+  final IconData icon;
+  final String tooltip;
+  final VoidCallback onPressed;
+
+  const MapButton({
+    super.key,
+    required this.icon,
+    required this.tooltip,
+    required this.onPressed,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Material(
+      color: scheme.surface,
+      shape: const CircleBorder(),
+      elevation: 3,
+      child: IconButton(
+        tooltip: tooltip,
+        icon: Icon(icon, color: scheme.primary),
+        onPressed: onPressed,
+      ),
+    );
+  }
+}
+
+/// Tarjeta de un vehículo para listas.
+class DeviceCard extends StatelessWidget {
+  final Device device;
+  final Position? position;
+  final VoidCallback onTap;
+
+  const DeviceCard({
+    super.key,
+    required this.device,
+    required this.position,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final t = Theme.of(context);
+    final p = position;
+    final ignition = p?.ignition;
+    final details = <String>[
+      if (p != null) '${p.speedKmh.round()} km/h',
+      if (ignition != null) ignition ? 'Motor encendido' : 'Motor apagado',
+      if (p?.cutActive == true) 'Corte activo',
+    ];
+    return Card(
+      margin: EdgeInsets.zero,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(14),
+          child: Row(
+            children: [
+              CircleAvatar(
+                radius: 24,
+                backgroundColor: t.colorScheme.primaryContainer,
+                child: Icon(Icons.directions_car,
+                    color: t.colorScheme.onPrimaryContainer),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(device.name,
+                        style: t.textTheme.titleMedium
+                            ?.copyWith(fontWeight: FontWeight.w600)),
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        StatusDot(status: device.status),
+                        const SizedBox(width: 6),
+                        Flexible(
+                          child: Text(
+                            '${statusLabel(device.status)} · ${timeAgo(device.lastUpdate)}',
+                            style: t.textTheme.bodySmall,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                    if (details.isNotEmpty) ...[
+                      const SizedBox(height: 4),
+                      Text(details.join(' · '),
+                          style: t.textTheme.bodySmall?.copyWith(
+                              color: p?.cutActive == true
+                                  ? t.colorScheme.error
+                                  : t.colorScheme.onSurfaceVariant)),
+                    ],
+                  ],
+                ),
+              ),
+              const Icon(Icons.chevron_right),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class StatusDot extends StatelessWidget {
+  final String status;
+  const StatusDot({super.key, required this.status});
+
+  @override
+  Widget build(BuildContext context) => Container(
+        width: 8,
+        height: 8,
+        decoration: BoxDecoration(
+          color: statusColor(status),
+          shape: BoxShape.circle,
+        ),
+      );
+}
 
 /// Ícono del vehículo en el mapa: flecha si se mueve, auto si está detenido.
 class VehicleMarker extends StatelessWidget {

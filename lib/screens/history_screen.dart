@@ -156,9 +156,9 @@ class _HistoryScreenState extends State<HistoryScreen> {
                           dotMarker(coords.last, Colors.red.shade600,
                               Icons.flag),
                       ]),
-                    mapAttribution(),
                   ],
                 ),
+                const Positioned(left: 8, bottom: 6, child: MapCredit()),
                 if (_loading)
                   const Positioned.fill(
                     child: ColoredBox(

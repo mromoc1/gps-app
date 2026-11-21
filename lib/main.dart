@@ -12,11 +12,11 @@ import 'widgets.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await initializeDateFormatting('es');
-  runApp(const AlertoApp());
+  runApp(const GpsApp());
 }
 
-class AlertoApp extends StatelessWidget {
-  const AlertoApp({super.key});
+class GpsApp extends StatelessWidget {
+  const GpsApp({super.key});
 
   @override
   Widget build(BuildContext context) {
