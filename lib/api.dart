@@ -54,6 +54,7 @@ class TraccarApi extends ChangeNotifier {
   IOWebSocketChannel? _socket;
   StreamSubscription<dynamic>? _socketSub;
   Timer? _reconnectTimer;
+  Timer? _devicesTimer;
   bool _live = false;
   bool socketConnected = false;
 
@@ -340,6 +341,61 @@ class TraccarApi extends ChangeNotifier {
       .split(',')
       .contains(token);
 
+  // ----------------------------------------------------- vehículos
+
+  /// El usuario puede editar sus vehículos (marcar comprometido).
+  bool get canEditDevices =>
+      user['readonly'] != true && user['deviceReadonly'] != true;
+
+  /// Marca o desmarca un vehículo como comprometido (robado o en riesgo).
+  /// Queda guardado en Traccar, en los atributos del dispositivo.
+  Future<void> setCompromised(int deviceId, bool value) async {
+    final d = devices[deviceId];
+    if (d == null) throw ApiException('Este vehículo ya no está disponible.');
+    // Se parte de la versión más reciente del servidor para no pisar cambios.
+    Map<String, dynamic> current;
+    try {
+      current = Map<String, dynamic>.from(
+          await _getJson('/api/devices/$deviceId') as Map);
+    } on ApiException {
+      current = Map<String, dynamic>.from(d.raw);
+    }
+    final attrs = Map<String, dynamic>.from((current['attributes'] as Map?) ?? const {});
+    if (value) {
+      attrs[Device.kCompromised] = true;
+      attrs[Device.kCompromisedSince] = DateTime.now().toUtc().toIso8601String();
+      attrs[Device.kCompromisedBy] = userName.isNotEmpty ? userName : userEmail;
+    } else {
+      attrs
+        ..remove(Device.kCompromised)
+        ..remove(Device.kCompromisedSince)
+        ..remove(Device.kCompromisedBy);
+    }
+    final r = await _send('PUT', '/api/devices/$deviceId',
+        body: {...current, 'attributes': attrs});
+    try {
+      final nd = Device.fromJson(jsonDecode(utf8.decode(r.bodyBytes)) as Map<String, dynamic>);
+      // El estado en línea lo sigue informando el WebSocket.
+      devices[nd.id] = nd;
+    } catch (_) {
+      await _refreshDevices();
+    }
+    notifyListeners();
+  }
+
+  /// Vuelve a leer los vehículos (para ver marcas hechas desde otro celular).
+  Future<void> _refreshDevices() async {
+    final ds = await _getJson('/api/devices') as List<dynamic>;
+    final ids = <int>{};
+    for (final e in ds) {
+      final d = Device.fromJson(e as Map<String, dynamic>);
+      devices[d.id] = d;
+      ids.add(d.id);
+    }
+    devices.removeWhere((id, _) => !ids.contains(id));
+    notifyListeners();
+  }
+
   Future<void> loadAll() async {
     final ds = await _getJson('/api/devices') as List<dynamic>;
     final ps = await _getJson('/api/positions') as List<dynamic>;
@@ -431,10 +487,19 @@ class TraccarApi extends ChangeNotifier {
     if (_live) return;
     _live = true;
     _connectSocket();
+    _devicesTimer?.cancel();
+    _devicesTimer = Timer.periodic(const Duration(seconds: 60), (_) async {
+      if (!_live || !socketConnected) return;
+      try {
+        await _refreshDevices();
+      } catch (_) {}
+    });
   }
 
   void stopLive() {
     _live = false;
+    _devicesTimer?.cancel();
+    _devicesTimer = null;
     _reconnectTimer?.cancel();
     _socketSub?.cancel();
     _socketSub = null;

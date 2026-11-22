@@ -14,6 +14,18 @@ y sube en cada compilación. Cada APK publicado se etiqueta como
 Cada versión necesita su sección `## X.Y.Z` en este archivo: sin ella la
 compilación falla. El texto de la sección aparece como "Novedades" en el release.
 
+## 0.9.0 – 2026-11-22
+
+- **Vehículo comprometido**: en el panel del vehículo hay un botón con ícono
+  de alerta a la derecha del nombre. Al tocarlo pregunta si se quiere marcar
+  como vehículo comprometido (por ejemplo, robado). Marcado, el auto aparece
+  en rojo en el mapa (encima de los demás), con la etiqueta "Comprometido" en
+  la lista de Vehículos (primero en la lista) y un aviso en el panel con la
+  fecha y quién lo marcó. El mismo botón ofrece "Marcar como recuperado".
+- La marca se guarda en Traccar (atributos `comprometido`,
+  `comprometidoDesde` y `comprometidoPor` del dispositivo), así que se ve en
+  todos los celulares; la app revisa los vehículos cada minuto.
+
 ## 0.8.1 – 2026-11-22
 
 - Al abrir el panel de un vehículo, el auto queda centrado en la parte del

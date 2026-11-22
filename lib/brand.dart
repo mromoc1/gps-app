@@ -3,6 +3,9 @@ import 'package:flutter/material.dart';
 const Color kBrandNavy = Color(0xFF12355B);
 const Color kBrandOrange = Color(0xFFF28C28);
 
+/// Rojo de vehículo comprometido (marcador, etiqueta y botón de alerta).
+const Color kCompromisedColor = Color(0xFFD32F2F);
+
 /// Esquinas semicurvas, iguales en toda la app.
 const double kRadiusButton = 10;
 const double kRadiusCard = 12;

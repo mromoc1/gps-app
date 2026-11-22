@@ -23,7 +23,10 @@ class _VehiclesSheetState extends State<VehiclesSheet> {
         listenable: api,
         builder: (context, _) {
           final all = api.devices.values.toList()
-            ..sort((a, b) => a.name.compareTo(b.name));
+            // Primero los comprometidos; después por nombre.
+            ..sort((a, b) => a.compromised != b.compromised
+                ? (a.compromised ? -1 : 1)
+                : a.name.compareTo(b.name));
           if (all.isEmpty) {
             return ListView(
               controller: widget.scrollController,

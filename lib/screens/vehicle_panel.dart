@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../api.dart';
+import '../brand.dart';
 import '../models.dart';
 import '../util.dart';
 import '../widgets.dart';
@@ -45,6 +46,7 @@ class VehiclePanel extends StatefulWidget {
 class _VehiclePanelState extends State<VehiclePanel> {
   static const int _eventDays = 7;
   bool _sending = false;
+  bool _marking = false;
   bool _showEvents = false;
   bool _eventsLoading = false;
   bool _eventsLoaded = false;
@@ -95,6 +97,45 @@ class _VehiclePanelState extends State<VehiclePanel> {
   void _openEvents() {
     setState(() => _showEvents = true);
     if (!_eventsLoaded && !_eventsLoading) _loadEvents();
+  }
+
+  /// Marca el vehículo como comprometido o, si ya lo está, como recuperado.
+  Future<void> _toggleCompromised(Device d) async {
+    final mark = !d.compromised;
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (c) => AlertDialog(
+        icon: Icon(mark ? Icons.warning_amber_rounded : Icons.verified_outlined,
+            color: mark ? kCompromisedColor : Colors.green.shade700),
+        title: Text(mark ? '¿Marcar como vehículo comprometido?' : '¿Marcar como recuperado?'),
+        content: Text(mark
+            ? '${d.name} quedará en rojo en el mapa y en la lista de vehículos, '
+                'en todos los celulares que lo siguen.'
+            : '${d.name} volverá a su color normal.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(c, false), child: const Text('No')),
+          FilledButton(
+            style: FilledButton.styleFrom(
+                backgroundColor: mark ? kCompromisedColor : Colors.green.shade700),
+            onPressed: () => Navigator.pop(c, true),
+            child: Text(mark ? 'Sí, marcar' : 'Sí, recuperado'),
+          ),
+        ],
+      ),
+    );
+    if (ok != true || !mounted) return;
+    setState(() => _marking = true);
+    try {
+      await api.setCompromised(d.id, mark);
+      if (mounted) {
+        showMessage(context,
+            mark ? '${d.name} quedó marcado como comprometido.' : '${d.name} quedó marcado como recuperado.');
+      }
+    } on ApiException catch (e) {
+      if (mounted) showMessage(context, e.message);
+    } finally {
+      if (mounted) setState(() => _marking = false);
+    }
   }
 
   Future<void> _engine(Device d, Position? p, bool stop) async {
@@ -199,12 +240,34 @@ class _VehiclePanelState extends State<VehiclePanel> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Text(d.name,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: t.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700)),
-              const SizedBox(height: 6),
-              _StatusHeader(device: d, position: p),
+              // Nombre y estado a la izquierda; botón de alerta a la derecha.
+              Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Text(d.name,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: t.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700)),
+                        const SizedBox(height: 6),
+                        _StatusHeader(device: d, position: p),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  _CompromisedButton(
+                    compromised: d.compromised,
+                    busy: _marking,
+                    onPressed: api.canEditDevices ? () => _toggleCompromised(d) : null,
+                  ),
+                ],
+              ),
+              if (d.compromised) ...[
+                const SizedBox(height: 8),
+                _CompromisedBanner(device: d),
+              ],
               const SizedBox(height: 12),
               Row(
                 children: [
@@ -414,6 +477,93 @@ class _StatusHeader extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+/// Botón con ícono de alerta, a la derecha del título del panel.
+/// Sin marcar: contorno rojo. Marcado: relleno rojo.
+class _CompromisedButton extends StatelessWidget {
+  final bool compromised;
+  final bool busy;
+  final VoidCallback? onPressed;
+  const _CompromisedButton({
+    required this.compromised,
+    required this.busy,
+    required this.onPressed,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    if (busy) {
+      return const SizedBox(
+        width: 48,
+        height: 48,
+        child: Padding(padding: EdgeInsets.all(12), child: CircularProgressIndicator(strokeWidth: 2.5)),
+      );
+    }
+    final tooltip = onPressed == null
+        ? 'Tu cuenta no puede marcar vehículos'
+        : compromised
+            ? 'Marcar como recuperado'
+            : 'Marcar como vehículo comprometido';
+    return compromised
+        ? IconButton.filled(
+            tooltip: tooltip,
+            style: IconButton.styleFrom(
+              backgroundColor: kCompromisedColor,
+              foregroundColor: Colors.white,
+            ),
+            icon: const Icon(Icons.warning_amber_rounded),
+            onPressed: onPressed,
+          )
+        : IconButton.outlined(
+            tooltip: tooltip,
+            style: IconButton.styleFrom(
+              foregroundColor: kCompromisedColor,
+              side: BorderSide(color: kCompromisedColor.withValues(alpha: 0.6)),
+            ),
+            icon: const Icon(Icons.warning_amber_rounded),
+            onPressed: onPressed,
+          );
+  }
+}
+
+/// Aviso rojo bajo el título: desde cuándo y quién lo marcó.
+class _CompromisedBanner extends StatelessWidget {
+  final Device device;
+  const _CompromisedBanner({required this.device});
+
+  @override
+  Widget build(BuildContext context) {
+    final t = Theme.of(context);
+    final since = device.compromisedSince;
+    final by = device.compromisedBy;
+    final parts = [
+      if (since != null) 'desde ${fmtDateTime(since)}',
+      if (by.isNotEmpty) 'por $by',
+    ];
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: kCompromisedColor.withValues(alpha: 0.10),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.warning_amber_rounded, size: 18, color: kCompromisedColor),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              'Comprometido${parts.isEmpty ? '' : ' ${parts.join(' ')}'}',
+              style: t.textTheme.bodySmall?.copyWith(
+                  color: kCompromisedColor, fontWeight: FontWeight.w600),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
