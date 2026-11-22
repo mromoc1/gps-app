@@ -1,10 +1,11 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_map/flutter_map.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 import '../api.dart';
 import '../brand.dart';
+import '../marker_icons.dart';
 import '../models.dart';
 import '../util.dart';
 import '../widgets.dart';
@@ -20,8 +21,7 @@ class DeviceScreen extends StatefulWidget {
 }
 
 class _DeviceScreenState extends State<DeviceScreen> {
-  final MapController _map = MapController();
-  bool _mapReady = false;
+  GoogleMapController? _map;
   bool _follow = true;
   int? _lastPositionId;
   bool _sending = false;
@@ -44,16 +44,17 @@ class _DeviceScreenState extends State<DeviceScreen> {
   @override
   void dispose() {
     _eventsSub?.cancel();
+    _map?.dispose();
     super.dispose();
   }
 
   void _maybeFollow(Position? p) {
     if (p == null || p.id == _lastPositionId) return;
     _lastPositionId = p.id;
-    if (!_follow || !_mapReady) return;
+    if (!_follow || _map == null) return;
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted || !_mapReady) return;
-      _map.move(p.latLng, _map.camera.zoom);
+      if (!mounted) return;
+      _map?.animateCamera(CameraUpdate.newLatLng(p.latLng));
     });
   }
 
@@ -170,7 +171,7 @@ class _DeviceScreenState extends State<DeviceScreen> {
                     tooltip: 'Seguir vehículo',
                     onPressed: () {
                       setState(() => _follow = true);
-                      _map.move(p.latLng, _map.camera.zoom);
+                      _map?.animateCamera(CameraUpdate.newLatLng(p.latLng));
                     },
                   ),
                 ),
@@ -286,28 +287,33 @@ class _DeviceScreenState extends State<DeviceScreen> {
 
   Widget _buildMap(Device d, Position p) {
     final h = MediaQuery.of(context).size.height;
-    return Stack(
-      children: [
-        FlutterMap(
-          mapController: _map,
-          options: MapOptions(
-            initialCenter: p.latLng,
-            initialZoom: 16,
-            interactionOptions: const InteractionOptions(
-              flags: InteractiveFlag.all & ~InteractiveFlag.rotate,
-            ),
-            onMapReady: () => _mapReady = true,
-            onPositionChanged: (camera, hasGesture) {
-              if (hasGesture && _follow) setState(() => _follow = false);
-            },
+    // Un toque del usuario sobre el mapa deja de seguir al vehículo.
+    return Listener(
+      onPointerDown: (_) {
+        if (_follow) setState(() => _follow = false);
+      },
+      child: GoogleMap(
+        initialCameraPosition: CameraPosition(target: p.latLng, zoom: 16),
+        onMapCreated: (c) => _map = c,
+        markers: {
+          Marker(
+            markerId: MarkerId('d${d.id}'),
+            position: p.latLng,
+            icon: MarkerIcons.vehicle(p, d.online),
+            rotation: MarkerIcons.rotation(p),
+            anchor: const Offset(0.5, 0.5),
+            flat: true,
           ),
-          children: [
-            ...baseMapLayers(),
-            MarkerLayer(markers: [vehicleMarker(p, d.online)]),
-          ],
+        },
+        myLocationButtonEnabled: false,
+        zoomControlsEnabled: false,
+        mapToolbarEnabled: false,
+        rotateGesturesEnabled: false,
+        padding: EdgeInsets.only(
+          top: MediaQuery.of(context).padding.top + 60,
+          bottom: h * 0.42,
         ),
-        Positioned(left: 8, bottom: h * 0.16 + 6, child: const MapCredit()),
-      ],
+      ),
     );
   }
 

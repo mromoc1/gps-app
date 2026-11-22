@@ -5,6 +5,8 @@ import 'package:intl/date_symbol_data_local.dart';
 import 'api.dart';
 import 'brand.dart';
 import 'config.dart';
+import 'marker_icons.dart';
+import 'push.dart';
 import 'screens/home_screen.dart';
 import 'screens/login_screen.dart';
 import 'widgets.dart';
@@ -12,6 +14,8 @@ import 'widgets.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await initializeDateFormatting('es');
+  await MarkerIcons.preload();
+  await Push.init();
   runApp(const GpsApp());
 }
 
@@ -28,6 +32,7 @@ class GpsApp extends StatelessWidget {
     return MaterialApp(
       title: kAppName,
       debugShowCheckedModeBanner: false,
+      scaffoldMessengerKey: messengerKey,
       locale: const Locale('es'),
       supportedLocales: const [Locale('es'), Locale('en')],
       localizationsDelegates: const [

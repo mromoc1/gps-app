@@ -7,6 +7,7 @@
 - Configura la firma oficial: si existe la variable ANDROID_KEYSTORE_PATH al
   compilar, el APK se firma con la llave oficial; si no, con la de depuración.
 """
+import re
 from pathlib import Path
 
 # ------------------------------------------------------------------ manifiesto
@@ -94,5 +95,10 @@ if "checkReleaseBuilds" not in g:
         1,
     )
 print("Lint de release desactivado")
+
+# firebase_messaging necesita Android 7.0 (API 24) o superior.
+g = re.sub(r"minSdk\s*=\s*flutter\.minSdkVersion", "minSdk = 24", g)
+if "minSdk = 24" not in g:
+    raise SystemExit("No se pudo fijar minSdk = 24")
 
 gradle.write_text(g, encoding="utf-8")

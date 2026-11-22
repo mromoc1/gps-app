@@ -22,6 +22,11 @@ class ApiException implements Exception {
   String toString() => message;
 }
 
+/// El servidor pide el código de verificación en dos pasos.
+class CodeRequiredException extends ApiException {
+  CodeRequiredException() : super('Ingresa el código de tu app de autenticación.');
+}
+
 /// Cliente de la API de Traccar + estado en vivo (vehículos y posiciones).
 class TraccarApi extends ChangeNotifier {
   final http.Client _http = http.Client();
@@ -29,6 +34,16 @@ class TraccarApi extends ChangeNotifier {
   String? _token;
   String userName = '';
   String userEmail = '';
+
+  /// Usuario completo tal como lo entrega Traccar (para actualizarlo).
+  Map<String, dynamic> user = {};
+  int? get userId => (user['id'] as num?)?.toInt();
+  DateTime? get userExpiration =>
+      user['expirationTime'] == null ? null : DateTime.tryParse('${user['expirationTime']}')?.toLocal();
+  bool get userReadonly => user['readonly'] == true;
+  bool get totpEnabled => (user['totpKey'] ?? '').toString().isNotEmpty;
+
+  final Map<int, DeviceGroup> groups = {};
 
   final Map<int, Device> devices = {};
   final Map<int, Position> positions = {};
@@ -74,6 +89,7 @@ class TraccarApi extends ChangeNotifier {
   void _readUser(String body) {
     try {
       final j = jsonDecode(body) as Map<String, dynamic>;
+      user = j;
       userName = (j['name'] ?? '').toString();
       userEmail = (j['email'] ?? '').toString();
     } catch (_) {}
@@ -82,13 +98,24 @@ class TraccarApi extends ChangeNotifier {
   // ---------------------------------------------------------------- sesión
 
   /// Inicia sesión y guarda un token de larga duración (no la clave).
-  Future<void> login(String email, String password) async {
+  Future<void> login(String email, String password, {String? code}) async {
     final r = await _guard(() => _http.post(
           _uri('/api/session'),
           headers: {'Accept': 'application/json'},
-          body: {'email': email.trim(), 'password': password},
+          body: {
+            'email': email.trim(),
+            'password': password,
+            if (code != null && code.trim().isNotEmpty) 'code': code.trim(),
+          },
         ));
     if (r.statusCode == 401) {
+      final auth = (r.headers['www-authenticate'] ?? '').toUpperCase();
+      if (auth.contains('TOTP')) {
+        if (code != null && code.trim().isNotEmpty) {
+          throw ApiException('Código incorrecto o vencido. Intenta con el siguiente.');
+        }
+        throw CodeRequiredException();
+      }
       throw ApiException('Correo o clave incorrectos.');
     }
     if (r.statusCode != 200) {
@@ -137,6 +164,18 @@ class TraccarApi extends ChangeNotifier {
     return true;
   }
 
+  /// Pide al servidor un correo para restablecer la clave.
+  Future<void> requestPasswordReset(String email) async {
+    final r = await _guard(() => _http.post(
+          _uri('/api/password/reset'),
+          headers: {'Accept': 'application/json'},
+          body: {'email': email.trim()},
+        ));
+    if (r.statusCode >= 500) {
+      throw ApiException('El servidor no pudo enviar el correo. Intenta más tarde.');
+    }
+  }
+
   Future<bool> _reauth() async {
     final t = _token;
     if (t == null) return false;
@@ -166,6 +205,8 @@ class TraccarApi extends ChangeNotifier {
     _token = null;
     userName = '';
     userEmail = '';
+    user = {};
+    groups.clear();
     devices.clear();
     positions.clear();
     notifyListeners();
@@ -187,6 +228,118 @@ class TraccarApi extends ChangeNotifier {
     return jsonDecode(utf8.decode(r.bodyBytes));
   }
 
+  /// POST/PUT/DELETE con JSON y reintento de sesión.
+  Future<http.Response> _send(String method, String path,
+      {Object? body, Map<String, String>? query}) async {
+    Future<http.Response> go() async {
+      final req = http.Request(method, _uri(path, query));
+      req.headers.addAll({..._headers, 'Content-Type': 'application/json'});
+      if (body != null) req.body = jsonEncode(body);
+      return http.Response.fromStream(await _http.send(req));
+    }
+
+    var r = await _guard(go);
+    if (r.statusCode == 401 && await _reauth()) r = await _guard(go);
+    if (r.statusCode == 401) {
+      throw ApiException('Tu sesión expiró. Ingresa de nuevo.');
+    }
+    if (r.statusCode >= 400) {
+      final msg = utf8.decode(r.bodyBytes);
+      throw ApiException('No se pudo guardar (${r.statusCode})'
+          '${msg.isNotEmpty && msg.length < 160 ? ': $msg' : '.'}');
+    }
+    return r;
+  }
+
+  // ----------------------------------------------------------- usuario
+
+  Future<void> refreshUser() async {
+    final j = await _getJson('/api/session');
+    _readUser(jsonEncode(j));
+    notifyListeners();
+  }
+
+  /// Guarda cambios en el usuario actual (atributos, clave de dos pasos).
+  Future<void> updateUser(Map<String, dynamic> changes) async {
+    final id = userId;
+    if (id == null) throw ApiException('No hay sesión.');
+    final body = {...user, ...changes};
+    final r = await _send('PUT', '/api/users/$id', body: body);
+    _readUser(utf8.decode(r.bodyBytes));
+    notifyListeners();
+  }
+
+  Map<String, dynamic> get userAttributes =>
+      Map<String, dynamic>.from((user['attributes'] as Map?) ?? const {});
+
+  /// Genera una clave nueva para la app de autenticación (no la activa).
+  Future<String> generateTotpKey() async {
+    final r = await _send('POST', '/api/users/totp');
+    return utf8.decode(r.bodyBytes).trim().replaceAll('"', '');
+  }
+
+  // ----------------------------------------------------------- zonas
+
+  Future<List<Geofence>> geofences({int? deviceId}) async {
+    final list = await _getJson('/api/geofences',
+        deviceId == null ? null : {'deviceId': '$deviceId'}) as List<dynamic>;
+    return list.map((e) => Geofence.fromJson(e as Map<String, dynamic>)).toList();
+  }
+
+  Future<Geofence> saveGeofence({int? id, required String name, required String area}) async {
+    final body = {if (id != null) 'id': id, 'name': name, 'area': area, 'attributes': <String, dynamic>{}};
+    final r = id == null
+        ? await _send('POST', '/api/geofences', body: body)
+        : await _send('PUT', '/api/geofences/$id', body: body);
+    return Geofence.fromJson(jsonDecode(utf8.decode(r.bodyBytes)) as Map<String, dynamic>);
+  }
+
+  Future<void> deleteGeofence(int id) => _send('DELETE', '/api/geofences/$id');
+
+  Future<void> linkDevice(String key, int objectId, int deviceId, bool linked) =>
+      _send(linked ? 'POST' : 'DELETE', '/api/permissions',
+          body: {'deviceId': deviceId, key: objectId});
+
+  // ----------------------------------------------------- notificaciones
+
+  Future<List<Map<String, dynamic>>> notifications() async {
+    final list = await _getJson('/api/notifications') as List<dynamic>;
+    return list.map((e) => Map<String, dynamic>.from(e as Map)).toList();
+  }
+
+  Future<void> createNotification(String type, {Map<String, dynamic>? attributes}) =>
+      _send('POST', '/api/notifications', body: {
+        'type': type,
+        'always': true,
+        'notificators': 'web,firebase',
+        'attributes': attributes ?? <String, dynamic>{},
+      });
+
+  Future<void> deleteNotification(int id) => _send('DELETE', '/api/notifications/$id');
+
+  Future<void> sendTestNotification() => _send('POST', '/api/notifications/test/firebase');
+
+  /// Registra (o quita) el token del celular para recibir push.
+  Future<void> setPushToken(String token, {required bool register}) async {
+    final attrs = userAttributes;
+    final tokens = ((attrs['notificationTokens'] ?? '') as Object)
+        .toString()
+        .split(',')
+        .map((t) => t.trim())
+        .where((t) => t.isNotEmpty)
+        .toSet();
+    final changed = register ? tokens.add(token) : tokens.remove(token);
+    if (!changed) return;
+    attrs['notificationTokens'] = tokens.join(',');
+    if (tokens.isEmpty) attrs.remove('notificationTokens');
+    await updateUser({'attributes': attrs});
+  }
+
+  bool hasPushToken(String token) => ((userAttributes['notificationTokens'] ?? '') as Object)
+      .toString()
+      .split(',')
+      .contains(token);
+
   Future<void> loadAll() async {
     final ds = await _getJson('/api/devices') as List<dynamic>;
     final ps = await _getJson('/api/positions') as List<dynamic>;
@@ -200,6 +353,15 @@ class TraccarApi extends ChangeNotifier {
       final p = Position.fromJson(e as Map<String, dynamic>);
       positions[p.deviceId] = p;
     }
+    try {
+      final gs = await _getJson('/api/groups') as List<dynamic>;
+      groups
+        ..clear()
+        ..addEntries(gs.map((e) {
+          final g = DeviceGroup.fromJson(e as Map<String, dynamic>);
+          return MapEntry(g.id, g);
+        }));
+    } catch (_) {}
     notifyListeners();
   }
 

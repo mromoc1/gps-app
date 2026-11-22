@@ -1,41 +1,8 @@
-import 'dart:math' as math;
-
 import 'package:flutter/material.dart';
-import 'package:flutter_map/flutter_map.dart';
-import 'package:latlong2/latlong.dart';
 
 import 'brand.dart';
-import 'config.dart';
 import 'models.dart';
 import 'util.dart';
-
-/// Capa base del mapa (OpenStreetMap) con atribución.
-List<Widget> baseMapLayers() => [
-      TileLayer(
-        urlTemplate: kTileUrl,
-        userAgentPackageName: kUserAgentPackage,
-        maxZoom: 19,
-      ),
-    ];
-
-/// Atribución de OpenStreetMap, ubicada a mano para no quedar bajo la barra.
-class MapCredit extends StatelessWidget {
-  final String text;
-  const MapCredit({super.key, this.text = '© OpenStreetMap'});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.85),
-        borderRadius: BorderRadius.circular(6),
-      ),
-      child: Text(text,
-          style: const TextStyle(fontSize: 10, color: Colors.black87)),
-    );
-  }
-}
 
 /// Espacio que ocupa la barra de navegación flotante (para no tapar contenido).
 double navBarSpace(BuildContext context) =>
@@ -166,69 +133,6 @@ class StatusDot extends StatelessWidget {
         ),
       );
 }
-
-/// Ícono del vehículo en el mapa: flecha si se mueve, auto si está detenido.
-class VehicleMarker extends StatelessWidget {
-  final Position position;
-  final bool online;
-
-  const VehicleMarker({super.key, required this.position, required this.online});
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final Color color;
-    if (!online) {
-      color = Colors.grey.shade600;
-    } else if (position.ignition == true) {
-      color = Colors.green.shade600;
-    } else {
-      color = scheme.primary;
-    }
-    final moving = position.speedKmh > 3;
-    return Container(
-      decoration: BoxDecoration(
-        color: color,
-        shape: BoxShape.circle,
-        border: Border.all(color: Colors.white, width: 3),
-        boxShadow: const [
-          BoxShadow(blurRadius: 6, color: Colors.black26, offset: Offset(0, 2)),
-        ],
-      ),
-      alignment: Alignment.center,
-      child: moving
-          ? Transform.rotate(
-              angle: position.course * math.pi / 180,
-              child: const Icon(Icons.navigation, color: Colors.white, size: 20),
-            )
-          : const Icon(Icons.directions_car, color: Colors.white, size: 20),
-    );
-  }
-}
-
-Marker vehicleMarker(Position p, bool online, {VoidCallback? onTap}) => Marker(
-      point: p.latLng,
-      width: 44,
-      height: 44,
-      child: GestureDetector(
-        onTap: onTap,
-        child: VehicleMarker(position: p, online: online),
-      ),
-    );
-
-Marker dotMarker(LatLng point, Color color, IconData icon) => Marker(
-      point: point,
-      width: 32,
-      height: 32,
-      child: Container(
-        decoration: BoxDecoration(
-          color: color,
-          shape: BoxShape.circle,
-          border: Border.all(color: Colors.white, width: 2),
-        ),
-        child: Icon(icon, color: Colors.white, size: 16),
-      ),
-    );
 
 /// Recuadro con un dato (ej. Velocidad: 42 km/h).
 class InfoTile extends StatelessWidget {

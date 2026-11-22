@@ -1,6 +1,7 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:latlong2/latlong.dart';
 
 import 'models.dart';
 
@@ -145,12 +146,23 @@ Color eventColor(String type) {
   }
 }
 
+/// Distancia en metros entre dos puntos (fórmula de haversine).
+double distanceMeters(double lat1, double lon1, double lat2, double lon2) {
+  const r = 6371000.0;
+  double rad(double d) => d * math.pi / 180;
+  final dLat = rad(lat2 - lat1), dLon = rad(lon2 - lon1);
+  final a = math.sin(dLat / 2) * math.sin(dLat / 2) +
+      math.cos(rad(lat1)) * math.cos(rad(lat2)) *
+          math.sin(dLon / 2) * math.sin(dLon / 2);
+  return 2 * r * math.asin(math.min(1.0, math.sqrt(a)));
+}
+
 /// Distancia recorrida en km sumando los tramos entre posiciones.
 double routeKm(List<Position> pts) {
-  const d = Distance();
   var meters = 0.0;
   for (var i = 1; i < pts.length; i++) {
-    meters += d.distance(pts[i - 1].latLng, pts[i].latLng).toDouble();
+    meters += distanceMeters(pts[i - 1].latitude, pts[i - 1].longitude,
+        pts[i].latitude, pts[i].longitude);
   }
   return meters / 1000;
 }

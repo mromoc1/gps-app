@@ -1,14 +1,16 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_map/flutter_map.dart';
-import 'package:latlong2/latlong.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 import '../api.dart';
 import '../brand.dart';
 import '../config.dart';
+import '../map_utils.dart';
+import '../marker_icons.dart';
 import '../models.dart';
 import '../util.dart';
 import '../widgets.dart';
 import 'device_screen.dart';
+import 'geofences_screen.dart';
 import 'history_screen.dart';
 
 /// Pestaña Mapa: todos los vehículos sobre un mapa a pantalla completa.
@@ -29,40 +31,40 @@ class MapTab extends StatefulWidget {
 }
 
 class _MapTabState extends State<MapTab> {
-  final MapController _map = MapController();
-  bool _mapReady = false;
+  GoogleMapController? _map;
   bool _centered = false;
+  List<Geofence> _zones = [];
 
   @override
   void initState() {
     super.initState();
     api.addListener(_onData);
+    _loadZones();
   }
 
   @override
   void dispose() {
     api.removeListener(_onData);
+    _map?.dispose();
     super.dispose();
+  }
+
+  Future<void> _loadZones() async {
+    try {
+      final z = await api.geofences();
+      if (mounted) setState(() => _zones = z);
+    } catch (_) {}
   }
 
   void _onData() => _centerAll();
 
-  void _centerAll({bool force = false}) {
-    if ((_centered && !force) || !_mapReady) return;
+  Future<void> _centerAll({bool force = false}) async {
+    final c = _map;
+    if ((_centered && !force) || c == null) return;
     final pts = api.positions.values.map((p) => p.latLng).toList();
     if (pts.isEmpty) return;
     _centered = true;
-    if (pts.length == 1) {
-      _map.move(pts.first, 15);
-    } else {
-      final pad = MediaQuery.of(context).padding;
-      _map.fitCamera(CameraFit.coordinates(
-        coordinates: pts,
-        padding: EdgeInsets.fromLTRB(
-            48, pad.top + 90, 48, navBarSpace(context) + 40),
-        maxZoom: 16,
-      ));
-    }
+    await fitPoints(c, pts, padding: 80);
   }
 
   void _showVehicle(Device d) {
@@ -73,60 +75,82 @@ class _MapTabState extends State<MapTab> {
     );
   }
 
+  Future<void> _openZones() async {
+    await Navigator.of(context)
+        .push(MaterialPageRoute(builder: (_) => const GeofencesScreen()));
+    _loadZones();
+  }
+
   @override
   Widget build(BuildContext context) {
-    final top = MediaQuery.of(context).padding.top;
+    final pad = MediaQuery.of(context).padding;
     final bottom = navBarSpace(context);
+    final zoneColor = Theme.of(context).colorScheme.secondary;
     return ListenableBuilder(
       listenable: api,
       builder: (context, _) {
         final list = api.devices.values.toList();
-        final markers = <Marker>[
+        final markers = <Marker>{
           for (final d in list)
             if (api.positions[d.id] != null)
-              vehicleMarker(api.positions[d.id]!, d.online,
-                  onTap: () => _showVehicle(d)),
-        ];
+              Marker(
+                markerId: MarkerId('d${d.id}'),
+                position: api.positions[d.id]!.latLng,
+                icon: MarkerIcons.vehicle(api.positions[d.id]!, d.online),
+                rotation: MarkerIcons.rotation(api.positions[d.id]!),
+                anchor: const Offset(0.5, 0.5),
+                flat: true,
+                onTap: () => _showVehicle(d),
+              ),
+        };
         return Stack(
           children: [
             Positioned.fill(
-              child: FlutterMap(
-                mapController: _map,
-                options: MapOptions(
-                  initialCenter: const LatLng(-33.4489, -70.6693),
-                  initialZoom: 11,
-                  interactionOptions: const InteractionOptions(
-                    flags: InteractiveFlag.all & ~InteractiveFlag.rotate,
-                  ),
-                  onMapReady: () {
-                    _mapReady = true;
-                    _centerAll();
-                  },
-                ),
-                children: [
-                  ...baseMapLayers(),
-                  MarkerLayer(markers: markers),
-                ],
+              child: GoogleMap(
+                initialCameraPosition:
+                    const CameraPosition(target: kDefaultCenter, zoom: 11),
+                onMapCreated: (c) {
+                  _map = c;
+                  _centerAll();
+                },
+                markers: markers,
+                circles: geofenceCircles(_zones, zoneColor),
+                polygons: geofencePolygons(_zones, zoneColor),
+                myLocationButtonEnabled: false,
+                zoomControlsEnabled: false,
+                mapToolbarEnabled: false,
+                rotateGesturesEnabled: false,
+                padding: EdgeInsets.only(top: pad.top + 70, bottom: bottom),
               ),
             ),
-            // Barra superior: marca + estado de conexión.
+            // Barra superior: marca + estado de conexión + botones.
             Positioned(
-              top: top + 12,
+              top: pad.top + 12,
               left: 12,
               right: 12,
               child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   _TopPill(vehicles: list.length),
                   const Spacer(),
-                  MapButton(
-                    icon: Icons.center_focus_strong,
-                    tooltip: 'Ver todos',
-                    onPressed: () => _centerAll(force: true),
+                  Column(
+                    children: [
+                      MapButton(
+                        icon: Icons.center_focus_strong,
+                        tooltip: 'Ver todos',
+                        onPressed: () => _centerAll(force: true),
+                      ),
+                      const SizedBox(height: 10),
+                      MapButton(
+                        icon: Icons.fence,
+                        tooltip: 'Zonas',
+                        onPressed: _openZones,
+                      ),
+                    ],
                   ),
                 ],
               ),
             ),
-            Positioned(left: 8, bottom: bottom + 4, child: const MapCredit()),
             if (widget.loading && list.isEmpty)
               const Center(child: CircularProgressIndicator()),
             if (!widget.loading && widget.error != null && list.isEmpty)

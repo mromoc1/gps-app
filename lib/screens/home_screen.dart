@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../api.dart';
 import '../brand.dart';
+import '../push.dart';
 import '../widgets.dart';
 import 'alerts_tab.dart';
 import 'map_tab.dart';
@@ -36,6 +37,8 @@ class _HomeScreenState extends State<HomeScreen> {
     try {
       await api.loadAll();
       api.startLive();
+      // Deja este celular listo para recibir alertas (pide permiso una vez).
+      Push.register();
     } on ApiException catch (e) {
       _error = e.message;
     } catch (_) {

@@ -14,6 +14,24 @@ y sube en cada compilación. Cada APK publicado se etiqueta como
 Cada versión necesita su sección `## X.Y.Z` en este archivo: sin ella la
 compilación falla. El texto de la sección aparece como "Novedades" en el release.
 
+## 0.5.0 – 2026-11-22
+
+- **Google Maps normal en todos los mapas** (mapa general, detalle del
+  vehículo e historial). Se quitó la pantalla Probar mapas y OpenStreetMap.
+- **Notificaciones push** con Firebase: llegan aunque la app esté cerrada.
+  Nueva pantalla Perfil → Notificaciones para elegir cada alerta (alarmas,
+  encendido y apagado, exceso de velocidad, zonas, movimiento, conexión) y
+  enviar una prueba.
+- **Zonas (geocercas)**: crear, editar y borrar círculos o polígonos
+  tocando el mapa, y elegir qué vehículos vigila cada una. Se ven en el mapa.
+- **Recuperar la clave por correo** desde "¿Olvidaste tu clave?".
+- **Verificación en dos pasos** con Google Authenticator u otra app similar
+  (código QR y clave manual).
+- **Estado de la cuenta** en Perfil: activa, vence pronto o vencida.
+- **Grupos de vehículos**: filtros en Vehículos, solo si hay varios vehículos
+  agrupados.
+- Requiere Android 7.0 o superior.
+
 ## 0.4.0 – 2026-11-22
 
 - **Google Maps** en Probar mapas, con cinco vistas: Normal, Satélite,

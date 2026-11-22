@@ -3,9 +3,13 @@ import 'package:flutter/material.dart';
 import '../api.dart';
 import '../brand.dart';
 import '../config.dart';
+import '../push.dart';
+import '../util.dart';
 import '../widgets.dart';
+import 'geofences_screen.dart';
 import 'login_screen.dart';
-import 'maps_lab_screen.dart';
+import 'notifications_screen.dart';
+import 'security_screen.dart';
 
 /// Pestaña Perfil: cuenta, versión de la app y cómo está construida.
 class ProfileTab extends StatelessWidget {
@@ -32,11 +36,53 @@ class ProfileTab extends StatelessWidget {
       ),
     );
     if (ok != true) return;
+    await Push.unregister();
     await api.logout();
     if (!context.mounted) return;
     Navigator.of(context).pushAndRemoveUntil(
       MaterialPageRoute(builder: (_) => const LoginScreen()),
       (_) => false,
+    );
+  }
+
+  void _open(BuildContext context, Widget screen) =>
+      Navigator.of(context).push(MaterialPageRoute(builder: (_) => screen));
+
+  /// Estado de la cuenta según la fecha de vencimiento del usuario.
+  Widget _accountTile(BuildContext context) {
+    final exp = api.userExpiration;
+    final IconData icon;
+    final Color color;
+    final String title;
+    final String subtitle;
+    if (exp == null) {
+      icon = Icons.all_inclusive;
+      color = Colors.green.shade700;
+      title = 'Cuenta activa';
+      subtitle = 'Sin fecha de vencimiento';
+    } else {
+      final days = exp.difference(DateTime.now()).inDays;
+      if (exp.isBefore(DateTime.now())) {
+        icon = Icons.error_outline;
+        color = Colors.red.shade700;
+        title = 'Cuenta vencida';
+        subtitle = 'Venció el ${fmtDay(exp)}. Contacta a soporte para renovarla.';
+      } else if (days <= 15) {
+        icon = Icons.schedule;
+        color = Colors.orange.shade800;
+        title = 'Vence pronto';
+        subtitle = 'Vence el ${fmtDay(exp)} (${days == 0 ? 'hoy' : 'en $days días'})';
+      } else {
+        icon = Icons.verified_outlined;
+        color = Colors.green.shade700;
+        title = 'Cuenta activa';
+        subtitle = 'Vigente hasta el ${fmtDay(exp)}';
+      }
+    }
+    return ListTile(
+      leading: Icon(icon, color: color),
+      title: Text(title),
+      subtitle: Text(subtitle),
     );
   }
 
@@ -97,6 +143,33 @@ class ProfileTab extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 12),
+              _Section(title: 'Cuenta', children: [
+                _accountTile(context),
+                ListTile(
+                  leading: const Icon(Icons.notifications_outlined),
+                  title: const Text('Notificaciones'),
+                  subtitle: const Text('Elige qué alertas llegan a tu celular'),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () => _open(context, const NotificationsScreen()),
+                ),
+                ListTile(
+                  leading: const Icon(Icons.fence),
+                  title: const Text('Zonas'),
+                  subtitle: const Text('Avisos al entrar o salir de un lugar'),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () => _open(context, const GeofencesScreen()),
+                ),
+                ListTile(
+                  leading: Icon(api.totpEnabled
+                      ? Icons.verified_user
+                      : Icons.shield_outlined),
+                  title: const Text('Verificación en dos pasos'),
+                  subtitle: Text(api.totpEnabled ? 'Activada' : 'Desactivada'),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () => _open(context, const SecurityScreen()),
+                ),
+              ]),
+              const SizedBox(height: 12),
               _Section(title: 'Conexión', children: [
                 ListTile(
                   leading: const Icon(Icons.dns_outlined),
@@ -137,13 +210,6 @@ class ProfileTab extends StatelessWidget {
                     ].join(' · ')),
                   ),
                 ListTile(
-                  leading: const Icon(Icons.layers_outlined),
-                  title: const Text('Probar mapas'),
-                  subtitle: const Text('Ver cada proveedor de mapas con tus vehículos'),
-                  trailing: const Icon(Icons.chevron_right),
-                  onTap: () => openMapsLab(context),
-                ),
-                ListTile(
                   leading: const Icon(Icons.description_outlined),
                   title: const Text('Licencias de software'),
                   trailing: const Icon(Icons.chevron_right),
@@ -163,8 +229,13 @@ class ProfileTab extends StatelessWidget {
                 ),
                 ListTile(
                   leading: Icon(Icons.map_outlined),
-                  title: Text('OpenStreetMap'),
-                  subtitle: Text('Mapas con flutter_map'),
+                  title: Text('Google Maps'),
+                  subtitle: Text('Mapa normal de Google'),
+                ),
+                ListTile(
+                  leading: Icon(Icons.notifications_active_outlined),
+                  title: Text('Firebase'),
+                  subtitle: Text('Notificaciones push con la app cerrada'),
                 ),
                 ListTile(
                   leading: Icon(Icons.satellite_alt),

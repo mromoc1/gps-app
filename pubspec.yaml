@@ -1,7 +1,7 @@
 name: gps_app
 description: GPS App - prototipo de app para clientes (conectada a Traccar).
 publish_to: 'none'
-version: 0.4.0+1
+version: 0.5.0+1
 
 environment:
   sdk: '>=3.4.0 <4.0.0'
@@ -15,9 +15,11 @@ dependencies:
   http: ^1.2.2
   web_socket_channel: ^3.0.1
   shared_preferences: ^2.3.3
-  flutter_map: ^7.0.2
-  latlong2: ^0.9.1
   google_maps_flutter: ^2.9.0
+  firebase_core: any
+  firebase_messaging: any
+  qr_flutter: ^4.1.0
+  crypto: ^3.0.3
 
 dev_dependencies:
   flutter_launcher_icons: ^0.14.1

@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_map/flutter_map.dart';
-import 'package:latlong2/latlong.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 import '../api.dart';
+import '../map_utils.dart';
+import '../marker_icons.dart';
 import '../models.dart';
 import '../util.dart';
 import '../widgets.dart';
@@ -16,8 +17,14 @@ class HistoryScreen extends StatefulWidget {
 }
 
 class _HistoryScreenState extends State<HistoryScreen> {
-  final MapController _map = MapController();
-  bool _mapReady = false;
+  GoogleMapController? _map;
+
+  @override
+  void dispose() {
+    _map?.dispose();
+    super.dispose();
+  }
+
   late DateTime _day;
   bool _loading = true;
   String? _error;
@@ -58,17 +65,10 @@ class _HistoryScreenState extends State<HistoryScreen> {
   }
 
   void _fit() {
-    if (!_mapReady || _points.isEmpty) return;
-    final coords = _points.map((p) => p.latLng).toList();
-    if (coords.length == 1) {
-      _map.move(coords.first, 16);
-    } else {
-      _map.fitCamera(CameraFit.coordinates(
-        coordinates: coords,
-        padding: const EdgeInsets.all(40),
-        maxZoom: 17,
-      ));
-    }
+    final c = _map;
+    if (c == null || _points.isEmpty) return;
+    fitPoints(c, _points.map((p) => p.latLng).toList(),
+        padding: 48, singleZoom: 16);
   }
 
   void _shift(int days) {
@@ -124,41 +124,45 @@ class _HistoryScreenState extends State<HistoryScreen> {
           Expanded(
             child: Stack(
               children: [
-                FlutterMap(
-                  mapController: _map,
-                  options: MapOptions(
-                    initialCenter: api.positions[widget.device.id]?.latLng ??
-                        const LatLng(-33.4489, -70.6693),
-                    initialZoom: 13,
-                    interactionOptions: const InteractionOptions(
-                      flags: InteractiveFlag.all & ~InteractiveFlag.rotate,
-                    ),
-                    onMapReady: () {
-                      _mapReady = true;
-                      _fit();
-                    },
+                GoogleMap(
+                  initialCameraPosition: CameraPosition(
+                    target: api.positions[widget.device.id]?.latLng ?? kDefaultCenter,
+                    zoom: 13,
                   ),
-                  children: [
-                    ...baseMapLayers(),
+                  onMapCreated: (c) {
+                    _map = c;
+                    _fit();
+                  },
+                  polylines: {
                     if (coords.length >= 2)
-                      PolylineLayer(polylines: [
-                        Polyline(
-                          points: coords,
-                          strokeWidth: 5,
-                          color: t.colorScheme.primary,
-                        ),
-                      ]),
+                      Polyline(
+                        polylineId: const PolylineId('ruta'),
+                        points: coords,
+                        width: 5,
+                        color: t.colorScheme.primary,
+                      ),
+                  },
+                  markers: {
                     if (coords.isNotEmpty)
-                      MarkerLayer(markers: [
-                        dotMarker(coords.first, Colors.green.shade600,
-                            Icons.play_arrow),
-                        if (coords.length >= 2)
-                          dotMarker(coords.last, Colors.red.shade600,
-                              Icons.flag),
-                      ]),
-                  ],
+                      Marker(
+                        markerId: const MarkerId('inicio'),
+                        position: coords.first,
+                        icon: MarkerIcons.start,
+                        anchor: const Offset(0.5, 0.5),
+                      ),
+                    if (coords.length >= 2)
+                      Marker(
+                        markerId: const MarkerId('fin'),
+                        position: coords.last,
+                        icon: MarkerIcons.end,
+                        anchor: const Offset(0.5, 0.5),
+                      ),
+                  },
+                  myLocationButtonEnabled: false,
+                  zoomControlsEnabled: false,
+                  mapToolbarEnabled: false,
+                  rotateGesturesEnabled: false,
                 ),
-                const Positioned(left: 8, bottom: 6, child: MapCredit()),
                 if (_loading)
                   const Positioned.fill(
                     child: ColoredBox(
