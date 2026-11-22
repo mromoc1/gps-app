@@ -7,6 +7,7 @@ import '../brand.dart';
 import '../config.dart';
 import '../map_styles.dart';
 import '../widgets.dart';
+import 'google_map_screen.dart';
 
 /// Lista de mapas disponibles para probar.
 class MapsLabScreen extends StatefulWidget {
@@ -75,13 +76,24 @@ class _MapsLabScreenState extends State<MapsLabScreen> {
             ),
           ],
           _providerHeader('Google Maps'),
-          const Card(
-            child: ListTile(
-              leading: Icon(Icons.info_outline),
-              title: Text('Calles, satélite, tráfico y Street View'),
-              subtitle: Text(
-                  'Necesita otra librería y una clave de Google Cloud con '
-                  'facturación. Se probará en una versión aparte.'),
+          Card(
+            margin: const EdgeInsets.only(bottom: 14),
+            child: Column(
+              children: [
+                for (var i = 0; i < kGoogleMapModes.length; i++)
+                  ListTile(
+                    leading: Icon(kGoogleMapModes[i].traffic
+                        ? Icons.traffic_outlined
+                        : (kGoogleMapModes[i].name == 'Normal'
+                            ? Icons.map_outlined
+                            : Icons.satellite_alt)),
+                    title: Text(kGoogleMapModes[i].name),
+                    subtitle: Text(kGoogleMapModes[i].description),
+                    trailing: const Icon(Icons.chevron_right),
+                    onTap: () => Navigator.of(context).push(MaterialPageRoute(
+                        builder: (_) => GoogleMapScreen(initialIndex: i))),
+                  ),
+              ],
             ),
           ),
         ],

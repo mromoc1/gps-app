@@ -2,6 +2,8 @@
 
 - Agrega el permiso de INTERNET al manifiesto principal (necesario en release).
 - Pone el nombre visible de la app.
+- Agrega la clave de Google Maps al manifiesto. El valor llega al compilar
+  desde la variable de entorno GOOGLE_MAPS_API_KEY (secreto de GitHub).
 - Configura la firma oficial: si existe la variable ANDROID_KEYSTORE_PATH al
   compilar, el APK se firma con la llave oficial; si no, con la de depuración.
 """
@@ -18,10 +20,26 @@ if perm not in text:
     text = text[:end] + "\n    " + perm + text[end:]
 
 text = text.replace('android:label="gps_app"', 'android:label="GPS App"')
+
+maps_meta = (
+    '<meta-data android:name="com.google.android.geo.API_KEY" '
+    'android:value="${MAPS_API_KEY}"/>'
+)
+if "com.google.android.geo.API_KEY" not in text:
+    start = text.index("<application")
+    end = text.index(">", start) + 1
+    text = text[:end] + "\n        " + maps_meta + text[end:]
+
 manifest.write_text(text, encoding="utf-8")
 print("Manifiesto listo")
 
-# ----------------------------------------------------------------------- firma
+# --------------------------------------------------------------------- gradle
+gradle = Path("android/app/build.gradle.kts")
+if not gradle.exists():
+    raise SystemExit("No se encontró android/app/build.gradle.kts")
+g = gradle.read_text(encoding="utf-8")
+
+# Firma
 SIGNING_BLOCK = """    signingConfigs {
         create("release") {
             val storePath = System.getenv("ANDROID_KEYSTORE_PATH")
@@ -40,12 +58,6 @@ NEW_SIGN = (
     'signingConfig = if (System.getenv("ANDROID_KEYSTORE_PATH") != null) '
     'signingConfigs.getByName("release") else signingConfigs.getByName("debug")'
 )
-
-gradle = Path("android/app/build.gradle.kts")
-if not gradle.exists():
-    raise SystemExit("No se encontró android/app/build.gradle.kts")
-
-g = gradle.read_text(encoding="utf-8")
 if 'create("release")' not in g:
     if OLD_SIGN not in g or "    buildTypes {" not in g:
         print(g)
@@ -55,5 +67,20 @@ if 'create("release")' not in g:
         )
     g = g.replace("    buildTypes {", SIGNING_BLOCK + "    buildTypes {", 1)
     g = g.replace(OLD_SIGN, NEW_SIGN)
-    gradle.write_text(g, encoding="utf-8")
 print("Firma configurada")
+
+# Clave de Google Maps (placeholder del manifiesto)
+if "MAPS_API_KEY" not in g:
+    if "    defaultConfig {" not in g:
+        print(g)
+        raise SystemExit("No se encontró defaultConfig en build.gradle.kts")
+    g = g.replace(
+        "    defaultConfig {",
+        "    defaultConfig {\n"
+        '        manifestPlaceholders["MAPS_API_KEY"] = '
+        'System.getenv("GOOGLE_MAPS_API_KEY") ?: ""',
+        1,
+    )
+print("Clave de Google Maps configurada")
+
+gradle.write_text(g, encoding="utf-8")

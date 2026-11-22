@@ -14,6 +14,13 @@ y sube en cada compilación. Cada APK publicado se etiqueta como
 Cada versión necesita su sección `## X.Y.Z` en este archivo: sin ella la
 compilación falla. El texto de la sección aparece como "Novedades" en el release.
 
+## 0.4.0 – 2026-11-22
+
+- **Google Maps** en Probar mapas, con cinco vistas: Normal, Satélite,
+  Híbrido, Relieve y Tráfico en vivo, todas con los vehículos encima.
+- La clave de Google Maps se agrega al compilar desde el secreto
+  `GOOGLE_MAPS_API_KEY`; está restringida a esta app y solo al mapa de Android.
+
 ## 0.3.0 – 2026-11-21
 
 - Nueva pantalla **Probar mapas** (Perfil → Aplicación → Probar mapas):

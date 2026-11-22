@@ -81,9 +81,16 @@ jobs:
       - name: Compilar APK
         env:
           ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          GOOGLE_MAPS_API_KEY: ${{ secrets.GOOGLE_MAPS_API_KEY }}
         run: |
           if [ "$SIGNING" = "oficial" ]; then
             export ANDROID_KEYSTORE_PATH="$RUNNER_TEMP/release.jks"
+          fi
+          HAS_MAPS=false
+          if [ -n "$GOOGLE_MAPS_API_KEY" ]; then
+            HAS_MAPS=true
+          else
+            echo "::warning::Falta el secreto GOOGLE_MAPS_API_KEY: Google Maps se verá en blanco."
           fi
           flutter build apk --release \
             --build-name="$VERSION" \
@@ -91,7 +98,8 @@ jobs:
             --dart-define=APP_VERSION="$VERSION" \
             --dart-define=APP_BUILD="$BUILD" \
             --dart-define=APP_COMMIT="${GITHUB_SHA::7}" \
-            --dart-define=APP_BUILD_DATE="$(date -u +%Y-%m-%d)"
+            --dart-define=APP_BUILD_DATE="$(date -u +%Y-%m-%d)" \
+            --dart-define=HAS_GOOGLE_MAPS_KEY="$HAS_MAPS"
           rm -f "$RUNNER_TEMP/release.jks"
 
       - name: Archivos, firma y checksum

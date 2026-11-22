@@ -40,14 +40,19 @@ jobs:
         run: flutter analyze lib --no-fatal-infos --no-fatal-warnings
 
       - name: Compilar APK de prueba
+        env:
+          GOOGLE_MAPS_API_KEY: ${{ secrets.GOOGLE_MAPS_API_KEY }}
         run: |
           VERSION=$(python3 tool/version.py version)
+          HAS_MAPS=false
+          if [ -n "$GOOGLE_MAPS_API_KEY" ]; then HAS_MAPS=true; fi
           flutter build apk --release \
             --build-name="$VERSION" \
             --build-number="${{ github.run_number }}" \
             --dart-define=APP_VERSION="$VERSION" \
             --dart-define=APP_BUILD="prueba-${{ github.run_number }}" \
-            --dart-define=APP_COMMIT="${GITHUB_SHA::7}"
+            --dart-define=APP_COMMIT="${GITHUB_SHA::7}" \
+            --dart-define=HAS_GOOGLE_MAPS_KEY="$HAS_MAPS"
           cp build/app/outputs/flutter-apk/app-release.apk "gps-app-prueba-${GITHUB_SHA::7}.apk"
 
       - uses: actions/upload-artifact@v5

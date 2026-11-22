@@ -6,11 +6,14 @@ const String kAppName = 'GPS App';
 /// Versión de la app. En GitHub Actions se inyectan con --dart-define:
 /// APP_VERSION sale de pubspec.yaml y APP_BUILD es el número de compilación.
 const String kAppVersion =
-    String.fromEnvironment('APP_VERSION', defaultValue: '0.3.0');
+    String.fromEnvironment('APP_VERSION', defaultValue: '0.4.0');
 const String kAppBuild =
     String.fromEnvironment('APP_BUILD', defaultValue: 'local');
 const String kAppCommit = String.fromEnvironment('APP_COMMIT');
 const String kAppBuildDate = String.fromEnvironment('APP_BUILD_DATE');
+
+/// true cuando la compilación incluyó la clave de Google Maps.
+const bool kHasGoogleMapsKey = bool.fromEnvironment('HAS_GOOGLE_MAPS_KEY');
 
 /// Servidor Traccar (prototipo). En la versión final la app hablará con el
 /// backend propio, no directamente con Traccar.
