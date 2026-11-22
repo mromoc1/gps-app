@@ -93,12 +93,7 @@ class _MapTabState extends State<MapTab> {
     if (p != null) {
       _map?.animateCamera(CameraUpdate.newLatLngZoom(p.latLng, 16));
     }
-    await showMapSheet(
-      context,
-      (controller) => VehiclePanel(deviceId: d.id, scrollController: controller),
-      initialSize: 0.42,
-      barrier: false,
-    );
+    await showVehiclePanel(context, d.id);
     if (mounted) setState(() => _focused = null);
   }
 
@@ -151,7 +146,7 @@ class _MapTabState extends State<MapTab> {
                 padding: EdgeInsets.only(
                   top: pad.top + 70,
                   bottom: _focused != null
-                      ? MediaQuery.of(context).size.height * 0.42
+                      ? MediaQuery.of(context).size.height * kVehiclePanelHeight
                       : bottom + 64,
                 ),
                 onTap: (_) {

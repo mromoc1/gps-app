@@ -14,6 +14,16 @@ y sube en cada compilación. Cada APK publicado se etiqueta como
 Cada versión necesita su sección `## X.Y.Z` en este archivo: sin ella la
 compilación falla. El texto de la sección aparece como "Novedades" en el release.
 
+## 0.8.0 – 2026-11-22
+
+- **Panel del vehículo con alto fijo**: ya no se despliega a pantalla
+  completa. El nombre, el estado y los botones Detalles, Eventos e Historial
+  quedan siempre visibles arriba, y el corte de motor siempre visible abajo;
+  solo se desplaza la sección del medio.
+- **Eventos dentro del panel**: el botón Eventos muestra los eventos de los
+  últimos 7 días en el mismo panel, sin cambiar de pantalla. Los nuevos
+  aparecen en vivo.
+
 ## 0.7.0 – 2026-11-22
 
 - **Todo el detalle del vehículo en un solo panel**: al tocar un vehículo en

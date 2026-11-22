@@ -6,23 +6,47 @@ import '../api.dart';
 import '../models.dart';
 import '../util.dart';
 import '../widgets.dart';
-import 'events_screen.dart';
 import 'history_screen.dart';
 
-/// Panel de un vehículo: sube sobre el mapa principal al tocarlo.
-/// Arrastrándolo hacia arriba muestra todo: datos, historial, eventos y
-/// corte de motor.
+/// Alto del panel del vehículo, como fracción de la pantalla.
+const double kVehiclePanelHeight = 0.5;
+
+/// Abre el panel del vehículo sobre el mapa principal. Tiene alto fijo:
+/// no se despliega a pantalla completa; se cierra deslizándolo hacia abajo
+/// o tocando el mapa.
+Future<void> showVehiclePanel(BuildContext context, int deviceId) {
+  final h = MediaQuery.of(context).size.height;
+  return showModalBottomSheet<void>(
+    context: context,
+    isScrollControlled: true,
+    showDragHandle: true,
+    barrierColor: Colors.transparent, // el mapa se sigue viendo
+    builder: (_) => SizedBox(
+      height: h * kVehiclePanelHeight,
+      child: VehiclePanel(deviceId: deviceId),
+    ),
+  );
+}
+
+/// Panel de un vehículo. Arriba, fijos: nombre, estado y botones
+/// (Detalles, Eventos, Historial). Abajo, fijo: corte de motor.
+/// En el medio se ven los detalles o los eventos, según el botón elegido.
 class VehiclePanel extends StatefulWidget {
   final int deviceId;
-  final ScrollController scrollController;
-  const VehiclePanel({super.key, required this.deviceId, required this.scrollController});
+  const VehiclePanel({super.key, required this.deviceId});
 
   @override
   State<VehiclePanel> createState() => _VehiclePanelState();
 }
 
 class _VehiclePanelState extends State<VehiclePanel> {
+  static const int _eventDays = 7;
   bool _sending = false;
+  bool _showEvents = false;
+  bool _eventsLoading = false;
+  bool _eventsLoaded = false;
+  String? _eventsError;
+  List<TEvent> _events = [];
   StreamSubscription<TEvent>? _eventsSub;
 
   @override
@@ -30,6 +54,7 @@ class _VehiclePanelState extends State<VehiclePanel> {
     super.initState();
     _eventsSub = api.eventStream.listen((e) {
       if (e.deviceId != widget.deviceId || !mounted) return;
+      if (_eventsLoaded) setState(() => _events.insert(0, e));
       if (e.type == 'commandResult') {
         final result = e.attributes['result']?.toString() ?? '';
         showMessage(context, 'El equipo respondió: $result');
@@ -43,6 +68,30 @@ class _VehiclePanelState extends State<VehiclePanel> {
   void dispose() {
     _eventsSub?.cancel();
     super.dispose();
+  }
+
+  Future<void> _loadEvents() async {
+    setState(() {
+      _eventsLoading = true;
+      _eventsError = null;
+    });
+    try {
+      final now = DateTime.now();
+      _events = await api.events(
+        widget.deviceId,
+        now.subtract(const Duration(days: _eventDays)),
+        now.add(const Duration(minutes: 1)),
+      );
+      _eventsLoaded = true;
+    } on ApiException catch (e) {
+      _eventsError = e.message;
+    }
+    if (mounted) setState(() => _eventsLoading = false);
+  }
+
+  void _openEvents() {
+    setState(() => _showEvents = true);
+    if (!_eventsLoaded && !_eventsLoading) _loadEvents();
   }
 
   Future<void> _engine(Device d, Position? p, bool stop) async {
@@ -119,102 +168,165 @@ class _VehiclePanelState extends State<VehiclePanel> {
         final d = api.devices[widget.deviceId];
         final p = api.positions[widget.deviceId];
         if (d == null) {
-          return ListView(
-            controller: widget.scrollController,
-            children: const [
-              CenteredMessage(
-                icon: Icons.directions_car_outlined,
-                text: 'Este vehículo ya no está disponible.',
-              ),
-            ],
+          return const CenteredMessage(
+            icon: Icons.directions_car_outlined,
+            text: 'Este vehículo ya no está disponible.',
           );
         }
         // Mensajes (por ejemplo, del corte de motor) visibles dentro del panel.
         return ScaffoldMessenger(
           child: Scaffold(
             backgroundColor: Colors.transparent,
-            body: _buildSheet(d, p, widget.scrollController),
+            body: _buildPanel(d, p),
           ),
         );
       },
     );
   }
 
-  Widget _buildSheet(Device d, Position? p, ScrollController scroll) {
+  Widget _buildPanel(Device d, Position? p) {
     final t = Theme.of(context);
-    return ListView(
-        controller: scroll,
-        padding: EdgeInsets.fromLTRB(
-            16, 0, 16, 24 + MediaQuery.of(context).padding.bottom),
-        children: [
-          Text(d.name,
-              style: t.textTheme.titleLarge
-                  ?.copyWith(fontWeight: FontWeight.w700)),
-          const SizedBox(height: 6),
-          _StatusHeader(device: d, position: p),
-          const SizedBox(height: 14),
-          Row(
+    final bottom = MediaQuery.of(context).padding.bottom;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        // Fijo arriba: nombre, estado y botones.
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Expanded(
-                child: OutlinedButton.icon(
-                  icon: const Icon(Icons.route),
-                  label: const Text('Historial'),
-                  onPressed: () => Navigator.of(context).push(
-                    MaterialPageRoute(builder: (_) => HistoryScreen(device: d)),
+              Text(d.name,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: t.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700)),
+              const SizedBox(height: 6),
+              _StatusHeader(device: d, position: p),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: _PanelButton(
+                      icon: Icons.info_outline,
+                      label: 'Detalles',
+                      selected: !_showEvents,
+                      onTap: () => setState(() => _showEvents = false),
+                    ),
                   ),
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: OutlinedButton.icon(
-                  icon: const Icon(Icons.notifications_none),
-                  label: const Text('Eventos'),
-                  onPressed: () => Navigator.of(context).push(
-                    MaterialPageRoute(builder: (_) => EventsScreen(device: d)),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: _PanelButton(
+                      icon: Icons.notifications_none,
+                      label: 'Eventos',
+                      selected: _showEvents,
+                      onTap: _openEvents,
+                    ),
                   ),
-                ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: _PanelButton(
+                      icon: Icons.route,
+                      label: 'Historial',
+                      selected: false,
+                      onTap: () => Navigator.of(context).push(
+                        MaterialPageRoute(builder: (_) => HistoryScreen(device: d)),
+                      ),
+                    ),
+                  ),
+                ],
               ),
+              const SizedBox(height: 10),
             ],
           ),
-          const SizedBox(height: 16),
-          _buildInfo(p),
-          const SizedBox(height: 22),
-          Text('Corte de motor', style: t.textTheme.titleMedium),
-          const SizedBox(height: 8),
-          if (_sending)
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 12),
-              child: Center(child: CircularProgressIndicator()),
-            )
-          else
-            Row(
-              children: [
-                Expanded(
-                  child: FilledButton.icon(
-                    style: FilledButton.styleFrom(
-                      backgroundColor: Colors.red.shade700,
-                      minimumSize: const Size.fromHeight(48),
-                    ),
-                    icon: const Icon(Icons.power_settings_new),
-                    label: const Text('Cortar'),
-                    onPressed: () => _engine(d, p, true),
-                  ),
+        ),
+        const Divider(height: 1),
+        // En el medio, con su propio desplazamiento: detalles o eventos.
+        Expanded(
+          child: _showEvents
+              ? _buildEvents()
+              : ListView(
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+                  children: [_buildInfo(p)],
                 ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: FilledButton.icon(
-                    style: FilledButton.styleFrom(
-                      backgroundColor: Colors.green.shade700,
-                      minimumSize: const Size.fromHeight(48),
+        ),
+        const Divider(height: 1),
+        // Fijo abajo: corte de motor.
+        Padding(
+          padding: EdgeInsets.fromLTRB(16, 10, 16, 10 + bottom),
+          child: _sending
+              ? const SizedBox(
+                  height: 44, child: Center(child: CircularProgressIndicator()))
+              : Row(
+                  children: [
+                    Expanded(
+                      child: FilledButton.icon(
+                        style: FilledButton.styleFrom(
+                          backgroundColor: Colors.red.shade700,
+                          minimumSize: const Size.fromHeight(44),
+                        ),
+                        icon: const Icon(Icons.power_settings_new),
+                        label: const Text('Cortar motor'),
+                        onPressed: () => _engine(d, p, true),
+                      ),
                     ),
-                    icon: const Icon(Icons.play_arrow),
-                    label: const Text('Reactivar'),
-                    onPressed: () => _engine(d, p, false),
-                  ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: FilledButton.icon(
+                        style: FilledButton.styleFrom(
+                          backgroundColor: Colors.green.shade700,
+                          minimumSize: const Size.fromHeight(44),
+                        ),
+                        icon: const Icon(Icons.play_arrow),
+                        label: const Text('Reactivar'),
+                        onPressed: () => _engine(d, p, false),
+                      ),
+                    ),
+                  ],
                 ),
-              ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildEvents() {
+    if (_eventsLoading && _events.isEmpty) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    if (_eventsError != null && _events.isEmpty) {
+      return CenteredMessage(
+        icon: Icons.error_outline,
+        text: _eventsError!,
+        actionLabel: 'Reintentar',
+        onAction: _loadEvents,
+      );
+    }
+    if (_events.isEmpty) {
+      return const CenteredMessage(
+        icon: Icons.notifications_none,
+        text: 'Sin eventos en los últimos $_eventDays días.',
+      );
+    }
+    return RefreshIndicator(
+      onRefresh: _loadEvents,
+      child: ListView.separated(
+        padding: EdgeInsets.zero,
+        itemCount: _events.length,
+        separatorBuilder: (_, __) => const Divider(height: 1, indent: 72),
+        itemBuilder: (_, i) {
+          final e = _events[i];
+          final c = eventColor(e.type);
+          return ListTile(
+            dense: true,
+            leading: CircleAvatar(
+              radius: 18,
+              backgroundColor: c.withValues(alpha: 0.12),
+              child: Icon(eventIcon(e.type), color: c, size: 20),
             ),
-        ],
+            title: Text(eventLabel(e)),
+            subtitle: Text(fmtDateTime(e.eventTime)),
+          );
+        },
+      ),
     );
   }
 
@@ -300,5 +412,40 @@ class _StatusHeader extends StatelessWidget {
         ),
       ],
     );
+  }
+}
+
+/// Botón del panel del vehículo; resalta el que está elegido.
+class _PanelButton extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+  const _PanelButton({
+    required this.icon,
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final style = OutlinedButton.styleFrom(
+      minimumSize: const Size.fromHeight(42),
+      padding: const EdgeInsets.symmetric(horizontal: 6),
+      visualDensity: VisualDensity.compact,
+    );
+    final child = Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 18),
+        const SizedBox(width: 6),
+        Flexible(child: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis)),
+      ],
+    );
+    return selected
+        ? FilledButton.tonal(style: style, onPressed: onTap, child: child)
+        : OutlinedButton(style: style, onPressed: onTap, child: child);
   }
 }
