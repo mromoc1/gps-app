@@ -11,6 +11,9 @@ import 'history_screen.dart';
 /// Alto del panel del vehículo, como fracción de la pantalla.
 const double kVehiclePanelHeight = 0.5;
 
+/// Alto de la barrita para arrastrar que va sobre el panel (en píxeles).
+const double kVehiclePanelHandle = 48;
+
 /// Abre el panel del vehículo sobre el mapa principal. Tiene alto fijo:
 /// no se despliega a pantalla completa; se cierra deslizándolo hacia abajo
 /// o tocando el mapa.

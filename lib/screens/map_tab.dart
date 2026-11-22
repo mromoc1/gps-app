@@ -89,11 +89,16 @@ class _MapTabState extends State<MapTab> {
       _focused = d.id;
       _menuOpen = false;
     });
+    final panel = showVehiclePanel(context, d.id);
+    // Se espera a que el mapa aplique el nuevo margen inferior (el alto del
+    // panel); así el auto queda al centro de la parte del mapa que se ve.
+    await WidgetsBinding.instance.endOfFrame;
+    await Future<void>.delayed(const Duration(milliseconds: 120));
     final p = api.positions[d.id];
-    if (p != null) {
-      _map?.animateCamera(CameraUpdate.newLatLngZoom(p.latLng, 16));
+    if (p != null && mounted && _focused == d.id) {
+      await _map?.animateCamera(CameraUpdate.newLatLngZoom(p.latLng, 16));
     }
-    await showVehiclePanel(context, d.id);
+    await panel;
     if (mounted) setState(() => _focused = null);
   }
 
@@ -146,7 +151,8 @@ class _MapTabState extends State<MapTab> {
                 padding: EdgeInsets.only(
                   top: pad.top + 70,
                   bottom: _focused != null
-                      ? MediaQuery.of(context).size.height * kVehiclePanelHeight
+                      ? MediaQuery.of(context).size.height * kVehiclePanelHeight +
+                          kVehiclePanelHandle
                       : bottom + 64,
                 ),
                 onTap: (_) {

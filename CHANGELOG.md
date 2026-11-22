@@ -14,6 +14,11 @@ y sube en cada compilación. Cada APK publicado se etiqueta como
 Cada versión necesita su sección `## X.Y.Z` en este archivo: sin ella la
 compilación falla. El texto de la sección aparece como "Novedades" en el release.
 
+## 0.8.1 – 2026-11-22
+
+- Al abrir el panel de un vehículo, el auto queda centrado en la parte del
+  mapa que se ve sobre el panel (antes quedaba tapado por él).
+
 ## 0.8.0 – 2026-11-22
 
 - **Panel del vehículo con alto fijo**: ya no se despliega a pantalla
