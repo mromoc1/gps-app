@@ -23,6 +23,10 @@ class Device {
   final DateTime? lastUpdate;
   final String? model;
   final int groupId;
+  final Map<String, dynamic> attributes;
+
+  /// Objeto completo tal como lo entrega Traccar (para guardarlo de vuelta).
+  final Map<String, dynamic> raw;
 
   Device({
     required this.id,
@@ -32,6 +36,8 @@ class Device {
     this.lastUpdate,
     this.model,
     this.groupId = 0,
+    this.attributes = const {},
+    this.raw = const {},
   });
 
   factory Device.fromJson(Map<String, dynamic> j) => Device(
@@ -42,9 +48,25 @@ class Device {
         lastUpdate: _date(j['lastUpdate']),
         model: j['model']?.toString(),
         groupId: (j['groupId'] as num?)?.toInt() ?? 0,
+        attributes: Map<String, dynamic>.from((j['attributes'] as Map?) ?? const {}),
+        raw: j,
       );
 
   bool get online => status == 'online';
+
+  // Vehículo comprometido (robado o en riesgo). Se guarda en los atributos
+  // del dispositivo en Traccar para que se vea igual en todos los celulares.
+  static const String kCompromised = 'comprometido';
+  static const String kCompromisedSince = 'comprometidoDesde';
+  static const String kCompromisedBy = 'comprometidoPor';
+
+  bool get compromised {
+    final v = attributes[kCompromised];
+    return v == true || v?.toString().toLowerCase() == 'true';
+  }
+
+  DateTime? get compromisedSince => _date(attributes[kCompromisedSince]);
+  String get compromisedBy => (attributes[kCompromisedBy] ?? '').toString();
 }
 
 class Position {

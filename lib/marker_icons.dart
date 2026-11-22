@@ -34,10 +34,17 @@ class MarkerIcons {
     'offline': Colors.grey.shade600,
     'ignition': Colors.green.shade600,
     'online': kBrandNavy,
+    'compromised': kCompromisedColor,
   };
 
-  static BitmapDescriptor vehicle(Position p, bool online) {
-    final key = !online ? 'offline' : (p.ignition == true ? 'ignition' : 'online');
+  /// [compromised]: vehículo marcado como robado o en riesgo; va en rojo
+  /// aunque esté desconectado.
+  static BitmapDescriptor vehicle(Position p, bool online, {bool compromised = false}) {
+    final key = compromised
+        ? 'compromised'
+        : !online
+            ? 'offline'
+            : (p.ignition == true ? 'ignition' : 'online');
     final moving = p.speedKmh > 3;
     return _cache['$key-$moving'] ?? BitmapDescriptor.defaultMarker;
   }

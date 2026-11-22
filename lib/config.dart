@@ -6,7 +6,7 @@ const String kAppName = 'GPS App';
 /// Versión de la app. En GitHub Actions se inyectan con --dart-define:
 /// APP_VERSION sale de pubspec.yaml y APP_BUILD es el número de compilación.
 const String kAppVersion =
-    String.fromEnvironment('APP_VERSION', defaultValue: '0.8.1');
+    String.fromEnvironment('APP_VERSION', defaultValue: '0.9.0');
 const String kAppBuild =
     String.fromEnvironment('APP_BUILD', defaultValue: 'local');
 const String kAppCommit = String.fromEnvironment('APP_COMMIT');

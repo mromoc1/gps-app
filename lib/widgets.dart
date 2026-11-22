@@ -73,18 +73,35 @@ class DeviceCard extends StatelessWidget {
             children: [
               CircleAvatar(
                 radius: 24,
-                backgroundColor: t.colorScheme.primaryContainer,
-                child: Icon(Icons.directions_car,
-                    color: t.colorScheme.onPrimaryContainer),
+                backgroundColor: device.compromised
+                    ? kCompromisedColor
+                    : t.colorScheme.primaryContainer,
+                child: Icon(
+                    device.compromised ? Icons.warning_amber_rounded : Icons.directions_car,
+                    color: device.compromised
+                        ? Colors.white
+                        : t.colorScheme.onPrimaryContainer),
               ),
               const SizedBox(width: 14),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(device.name,
-                        style: t.textTheme.titleMedium
-                            ?.copyWith(fontWeight: FontWeight.w600)),
+                    Row(
+                      children: [
+                        Flexible(
+                          child: Text(device.name,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: t.textTheme.titleMedium
+                                  ?.copyWith(fontWeight: FontWeight.w600)),
+                        ),
+                        if (device.compromised) ...[
+                          const SizedBox(width: 8),
+                          const CompromisedTag(),
+                        ],
+                      ],
+                    ),
                     const SizedBox(height: 4),
                     Row(
                       children: [
@@ -117,6 +134,23 @@ class DeviceCard extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Etiqueta roja "Comprometido".
+class CompromisedTag extends StatelessWidget {
+  const CompromisedTag({super.key});
+
+  @override
+  Widget build(BuildContext context) => Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+        decoration: BoxDecoration(
+          color: kCompromisedColor,
+          borderRadius: BorderRadius.circular(6),
+        ),
+        child: const Text('Comprometido',
+            style: TextStyle(
+                color: Colors.white, fontSize: 11, fontWeight: FontWeight.w700)),
+      );
 }
 
 class StatusDot extends StatelessWidget {

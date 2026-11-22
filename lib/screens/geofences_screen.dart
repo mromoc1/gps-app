@@ -274,7 +274,8 @@ class _GeofenceEditorScreenState extends State<GeofenceEditorScreen> {
         Marker(
           markerId: MarkerId('d${p.deviceId}'),
           position: p.latLng,
-          icon: MarkerIcons.vehicle(p, api.devices[p.deviceId]?.online ?? false),
+          icon: MarkerIcons.vehicle(p, api.devices[p.deviceId]?.online ?? false,
+              compromised: api.devices[p.deviceId]?.compromised ?? false),
           anchor: const Offset(0.5, 0.5),
           flat: true,
         ),
