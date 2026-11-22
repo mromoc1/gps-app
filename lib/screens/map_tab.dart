@@ -126,7 +126,7 @@ class _MapTabState extends State<MapTab> {
                 icon: MarkerIcons.vehicle(api.positions[d.id]!, d.online,
                     compromised: d.compromised),
                 // Los comprometidos quedan encima de los demás.
-                zIndex: d.compromised ? 1.0 : 0.0,
+                zIndexInt: d.compromised ? 1 : 0,
                 rotation: MarkerIcons.rotation(api.positions[d.id]!),
                 anchor: const Offset(0.5, 0.5),
                 flat: true,
