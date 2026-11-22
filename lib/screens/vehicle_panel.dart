@@ -1,29 +1,27 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 import '../api.dart';
-import '../brand.dart';
-import '../marker_icons.dart';
 import '../models.dart';
 import '../util.dart';
 import '../widgets.dart';
 import 'events_screen.dart';
 import 'history_screen.dart';
 
-class DeviceScreen extends StatefulWidget {
+/// Panel de un vehículo: sube sobre el mapa principal al tocarlo.
+/// Arrastrándolo hacia arriba muestra todo: datos, historial, eventos y
+/// corte de motor.
+class VehiclePanel extends StatefulWidget {
   final int deviceId;
-  const DeviceScreen({super.key, required this.deviceId});
+  final ScrollController scrollController;
+  const VehiclePanel({super.key, required this.deviceId, required this.scrollController});
 
   @override
-  State<DeviceScreen> createState() => _DeviceScreenState();
+  State<VehiclePanel> createState() => _VehiclePanelState();
 }
 
-class _DeviceScreenState extends State<DeviceScreen> {
-  GoogleMapController? _map;
-  bool _follow = true;
-  int? _lastPositionId;
+class _VehiclePanelState extends State<VehiclePanel> {
   bool _sending = false;
   StreamSubscription<TEvent>? _eventsSub;
 
@@ -44,18 +42,7 @@ class _DeviceScreenState extends State<DeviceScreen> {
   @override
   void dispose() {
     _eventsSub?.cancel();
-    _map?.dispose();
     super.dispose();
-  }
-
-  void _maybeFollow(Position? p) {
-    if (p == null || p.id == _lastPositionId) return;
-    _lastPositionId = p.id;
-    if (!_follow || _map == null) return;
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
-      _map?.animateCamera(CameraUpdate.newLatLng(p.latLng));
-    });
   }
 
   Future<void> _engine(Device d, Position? p, bool stop) async {
@@ -132,58 +119,21 @@ class _DeviceScreenState extends State<DeviceScreen> {
         final d = api.devices[widget.deviceId];
         final p = api.positions[widget.deviceId];
         if (d == null) {
-          return Scaffold(
-            appBar: AppBar(),
-            body: const CenteredMessage(
-              icon: Icons.directions_car_outlined,
-              text: 'Este vehículo ya no está disponible.',
-            ),
-          );
-        }
-        _maybeFollow(p);
-        final top = MediaQuery.of(context).padding.top;
-        return Scaffold(
-          body: Stack(
-            children: [
-              Positioned.fill(
-                child: p == null
-                    ? const CenteredMessage(
-                        icon: Icons.location_off_outlined,
-                        text: 'El equipo aún no ha enviado su ubicación.',
-                      )
-                    : _buildMap(d, p),
-              ),
-              Positioned(
-                top: top + 12,
-                left: 12,
-                child: MapButton(
-                  icon: Icons.arrow_back,
-                  tooltip: 'Volver',
-                  onPressed: () => Navigator.of(context).maybePop(),
-                ),
-              ),
-              if (p != null && !_follow)
-                Positioned(
-                  top: top + 12,
-                  right: 12,
-                  child: MapButton(
-                    icon: Icons.my_location,
-                    tooltip: 'Seguir vehículo',
-                    onPressed: () {
-                      setState(() => _follow = true);
-                      _map?.animateCamera(CameraUpdate.newLatLng(p.latLng));
-                    },
-                  ),
-                ),
-              DraggableScrollableSheet(
-                initialChildSize: 0.42,
-                minChildSize: 0.16,
-                maxChildSize: 0.92,
-                snap: true,
-                snapSizes: const [0.42],
-                builder: (context, scroll) => _buildSheet(d, p, scroll),
+          return ListView(
+            controller: widget.scrollController,
+            children: const [
+              CenteredMessage(
+                icon: Icons.directions_car_outlined,
+                text: 'Este vehículo ya no está disponible.',
               ),
             ],
+          );
+        }
+        // Mensajes (por ejemplo, del corte de motor) visibles dentro del panel.
+        return ScaffoldMessenger(
+          child: Scaffold(
+            backgroundColor: Colors.transparent,
+            body: _buildSheet(d, p, widget.scrollController),
           ),
         );
       },
@@ -192,35 +142,17 @@ class _DeviceScreenState extends State<DeviceScreen> {
 
   Widget _buildSheet(Device d, Position? p, ScrollController scroll) {
     final t = Theme.of(context);
-    return Material(
-      color: t.colorScheme.surface,
-      elevation: 8,
-      borderRadius: const BorderRadius.vertical(
-          top: Radius.circular(kRadiusSheet)),
-      child: ListView(
+    return ListView(
         controller: scroll,
         padding: EdgeInsets.fromLTRB(
             16, 0, 16, 24 + MediaQuery.of(context).padding.bottom),
         children: [
-          Center(
-            child: Container(
-              margin: const EdgeInsets.symmetric(vertical: 10),
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: t.colorScheme.outlineVariant,
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-          ),
           Text(d.name,
               style: t.textTheme.titleLarge
                   ?.copyWith(fontWeight: FontWeight.w700)),
           const SizedBox(height: 6),
           _StatusHeader(device: d, position: p),
           const SizedBox(height: 14),
-          _buildInfo(p),
-          const SizedBox(height: 18),
           Row(
             children: [
               Expanded(
@@ -244,6 +176,8 @@ class _DeviceScreenState extends State<DeviceScreen> {
               ),
             ],
           ),
+          const SizedBox(height: 16),
+          _buildInfo(p),
           const SizedBox(height: 22),
           Text('Corte de motor', style: t.textTheme.titleMedium),
           const SizedBox(height: 8),
@@ -281,39 +215,6 @@ class _DeviceScreenState extends State<DeviceScreen> {
               ],
             ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildMap(Device d, Position p) {
-    final h = MediaQuery.of(context).size.height;
-    // Un toque del usuario sobre el mapa deja de seguir al vehículo.
-    return Listener(
-      onPointerDown: (_) {
-        if (_follow) setState(() => _follow = false);
-      },
-      child: GoogleMap(
-        initialCameraPosition: CameraPosition(target: p.latLng, zoom: 16),
-        onMapCreated: (c) => _map = c,
-        markers: {
-          Marker(
-            markerId: MarkerId('d${d.id}'),
-            position: p.latLng,
-            icon: MarkerIcons.vehicle(p, d.online),
-            rotation: MarkerIcons.rotation(p),
-            anchor: const Offset(0.5, 0.5),
-            flat: true,
-          ),
-        },
-        myLocationButtonEnabled: false,
-        zoomControlsEnabled: false,
-        mapToolbarEnabled: false,
-        rotateGesturesEnabled: false,
-        padding: EdgeInsets.only(
-          top: MediaQuery.of(context).padding.top + 60,
-          bottom: h * 0.42,
-        ),
-      ),
     );
   }
 

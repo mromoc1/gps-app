@@ -277,21 +277,29 @@ class SheetHeader extends StatelessWidget {
 /// y que se puede arrastrar para agrandarlo o cerrarlo.
 Future<void> showMapSheet(
   BuildContext context,
-  Widget Function(ScrollController controller) builder,
-) {
+  Widget Function(ScrollController controller) builder, {
+  double initialSize = 0.55,
+  bool barrier = true,
+}) {
   return showModalBottomSheet<void>(
     context: context,
     isScrollControlled: true,
     useSafeArea: true,
     showDragHandle: true,
+    // Sin oscurecer el mapa cuando el panel es de un vehículo, para verlo moverse.
+    barrierColor: barrier ? null : Colors.transparent,
     builder: (_) => DraggableScrollableSheet(
       expand: false,
-      initialChildSize: 0.55,
-      minChildSize: 0.3,
+      initialChildSize: initialSize,
+      minChildSize: 0.25,
       maxChildSize: 0.95,
       snap: true,
-      snapSizes: const [0.55],
+      snapSizes: [initialSize],
       builder: (_, controller) => builder(controller),
     ),
   );
 }
+
+/// Vehículo que se debe mostrar en el mapa principal (por ejemplo, al
+/// elegirlo en el panel Vehículos). El mapa lo centra y abre su panel.
+final ValueNotifier<int?> mapFocus = ValueNotifier<int?>(null);

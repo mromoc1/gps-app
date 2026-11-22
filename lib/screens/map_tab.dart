@@ -8,9 +8,8 @@ import '../marker_icons.dart';
 import '../models.dart';
 import '../util.dart';
 import '../widgets.dart';
-import 'device_screen.dart';
 import 'geofences_screen.dart';
-import 'history_screen.dart';
+import 'vehicle_panel.dart';
 
 /// Pestaña Mapa: todos los vehículos sobre un mapa a pantalla completa.
 class MapTab extends StatefulWidget {
@@ -34,17 +33,20 @@ class _MapTabState extends State<MapTab> {
   bool _centered = false;
   List<Geofence> _zones = [];
   bool _menuOpen = false;
+  int? _focused; // vehículo con su panel abierto: el mapa lo sigue
 
   @override
   void initState() {
     super.initState();
     api.addListener(_onData);
+    mapFocus.addListener(_onFocus);
     _loadZones();
   }
 
   @override
   void dispose() {
     api.removeListener(_onData);
+    mapFocus.removeListener(_onFocus);
     _map?.dispose();
     super.dispose();
   }
@@ -56,7 +58,23 @@ class _MapTabState extends State<MapTab> {
     } catch (_) {}
   }
 
-  void _onData() => _centerAll();
+  void _onData() {
+    final id = _focused;
+    if (id == null) {
+      _centerAll();
+      return;
+    }
+    final p = api.positions[id];
+    if (p != null) _map?.animateCamera(CameraUpdate.newLatLng(p.latLng));
+  }
+
+  void _onFocus() {
+    final id = mapFocus.value;
+    if (id == null) return;
+    mapFocus.value = null;
+    final d = api.devices[id];
+    if (d != null) _showVehicle(d);
+  }
 
   Future<void> _centerAll({bool force = false}) async {
     final c = _map;
@@ -67,12 +85,22 @@ class _MapTabState extends State<MapTab> {
     await fitPoints(c, pts, padding: 80);
   }
 
-  void _showVehicle(Device d) {
-    showModalBottomSheet<void>(
-      context: context,
-      showDragHandle: true,
-      builder: (_) => _VehicleSheet(deviceId: d.id),
+  Future<void> _showVehicle(Device d) async {
+    setState(() {
+      _focused = d.id;
+      _menuOpen = false;
+    });
+    final p = api.positions[d.id];
+    if (p != null) {
+      _map?.animateCamera(CameraUpdate.newLatLngZoom(p.latLng, 16));
+    }
+    await showMapSheet(
+      context,
+      (controller) => VehiclePanel(deviceId: d.id, scrollController: controller),
+      initialSize: 0.42,
+      barrier: false,
     );
+    if (mounted) setState(() => _focused = null);
   }
 
   Future<void> _openZones() async {
@@ -120,7 +148,13 @@ class _MapTabState extends State<MapTab> {
                 zoomControlsEnabled: false,
                 mapToolbarEnabled: false,
                 rotateGesturesEnabled: false,
-                padding: EdgeInsets.only(top: pad.top + 70, bottom: bottom + 64),
+                // Con un panel abierto, el vehículo queda visible sobre él.
+                padding: EdgeInsets.only(
+                  top: pad.top + 70,
+                  bottom: _focused != null
+                      ? MediaQuery.of(context).size.height * 0.42
+                      : bottom + 64,
+                ),
                 onTap: (_) {
                   if (_menuOpen) setState(() => _menuOpen = false);
                 },
@@ -342,87 +376,6 @@ class _MapMenu extends StatelessWidget {
           ),
         ),
       ],
-    );
-  }
-}
-
-/// Resumen de un vehículo al tocar su marcador.
-class _VehicleSheet extends StatelessWidget {
-  final int deviceId;
-  const _VehicleSheet({required this.deviceId});
-
-  @override
-  Widget build(BuildContext context) {
-    return ListenableBuilder(
-      listenable: api,
-      builder: (context, _) {
-        final d = api.devices[deviceId];
-        final p = api.positions[deviceId];
-        if (d == null) return const SizedBox(height: 120);
-        final t = Theme.of(context);
-        return SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Text(d.name,
-                    style: t.textTheme.titleLarge
-                        ?.copyWith(fontWeight: FontWeight.w700)),
-                const SizedBox(height: 4),
-                Row(children: [
-                  StatusDot(status: d.status),
-                  const SizedBox(width: 6),
-                  Text('${statusLabel(d.status)} · ${timeAgo(d.lastUpdate)}',
-                      style: t.textTheme.bodySmall),
-                ]),
-                const SizedBox(height: 14),
-                InfoGrid(children: [
-                  InfoTile(
-                    icon: Icons.speed,
-                    label: 'Velocidad',
-                    value: p == null ? '—' : '${p.speedKmh.round()} km/h',
-                  ),
-                  InfoTile(
-                    icon: p?.ignition == true ? Icons.key : Icons.key_off,
-                    label: 'Motor',
-                    value: p?.ignition == null
-                        ? '—'
-                        : (p!.ignition! ? 'Encendido' : 'Apagado'),
-                  ),
-                ]),
-                const SizedBox(height: 16),
-                Row(children: [
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      icon: const Icon(Icons.route),
-                      label: const Text('Historial'),
-                      onPressed: () {
-                        Navigator.pop(context);
-                        Navigator.of(context).push(MaterialPageRoute(
-                            builder: (_) => HistoryScreen(device: d)));
-                      },
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: FilledButton.icon(
-                      icon: const Icon(Icons.open_in_full),
-                      label: const Text('Ver detalle'),
-                      onPressed: () {
-                        Navigator.pop(context);
-                        Navigator.of(context).push(MaterialPageRoute(
-                            builder: (_) => DeviceScreen(deviceId: d.id)));
-                      },
-                    ),
-                  ),
-                ]),
-              ],
-            ),
-          ),
-        );
-      },
     );
   }
 }

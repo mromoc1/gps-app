@@ -14,6 +14,15 @@ y sube en cada compilación. Cada APK publicado se etiqueta como
 Cada versión necesita su sección `## X.Y.Z` en este archivo: sin ella la
 compilación falla. El texto de la sección aparece como "Novedades" en el release.
 
+## 0.7.0 – 2026-11-22
+
+- **Todo el detalle del vehículo en un solo panel**: al tocar un vehículo en
+  el mapa sube un panel; arrastrándolo hacia arriba muestra todos los datos,
+  Historial, Eventos y el corte de motor. Ya no se abre otra pantalla.
+- Con el panel abierto, el mapa principal se centra en el vehículo y lo va
+  siguiendo; tocar el mapa cierra el panel.
+- Elegir un vehículo en el panel Vehículos abre ese mismo panel sobre el mapa.
+
 ## 0.6.0 – 2026-11-22
 
 - **Nombre de la persona** en la barra superior del mapa, junto al estado

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../api.dart';
 import '../widgets.dart';
-import 'device_screen.dart';
 
 /// Panel Vehículos: sube sobre el mapa con el estado de cada vehículo.
 /// Si el usuario tiene varios vehículos agrupados, aparecen filtros por grupo.
@@ -82,11 +81,8 @@ class _VehiclesSheetState extends State<VehiclesSheet> {
                     device: d,
                     position: api.positions[d.id],
                     onTap: () {
-                      final nav = Navigator.of(context);
-                      nav.pop();
-                      nav.push(MaterialPageRoute(
-                        builder: (_) => DeviceScreen(deviceId: d.id),
-                      ));
+                      Navigator.of(context).pop();
+                      mapFocus.value = d.id;
                     },
                   ),
                   const SizedBox(height: 8),
