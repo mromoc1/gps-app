@@ -83,4 +83,16 @@ if "MAPS_API_KEY" not in g:
     )
 print("Clave de Google Maps configurada")
 
+# Lint de release: falla internamente al analizar google_maps_flutter_android
+# (NoSuchMethodError en JavaDocParser). No aporta al prototipo; se desactiva.
+if "checkReleaseBuilds" not in g:
+    if "    buildTypes {" not in g:
+        raise SystemExit("No se encontró buildTypes en build.gradle.kts")
+    g = g.replace(
+        "    buildTypes {",
+        "    lint {\n        checkReleaseBuilds = false\n    }\n\n    buildTypes {",
+        1,
+    )
+print("Lint de release desactivado")
+
 gradle.write_text(g, encoding="utf-8")
