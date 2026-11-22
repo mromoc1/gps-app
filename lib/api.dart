@@ -378,6 +378,17 @@ class TraccarApi extends ChangeNotifier {
         .toList();
   }
 
+  Future<List<Trip>> trips(int deviceId, DateTime from, DateTime to) async {
+    final list = await _getJson('/api/reports/trips', {
+      'deviceId': '$deviceId',
+      'from': _iso(from),
+      'to': _iso(to),
+    }) as List<dynamic>;
+    final out = list.map((e) => Trip.fromJson(e as Map<String, dynamic>)).toList();
+    out.sort((a, b) => (a.start ?? DateTime(0)).compareTo(b.start ?? DateTime(0)));
+    return out;
+  }
+
   Future<List<TEvent>> events(int deviceId, DateTime from, DateTime to) async {
     final list = await _getJson('/api/reports/events', {
       'deviceId': '$deviceId',

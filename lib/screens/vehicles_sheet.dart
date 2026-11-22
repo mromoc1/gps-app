@@ -4,32 +4,37 @@ import '../api.dart';
 import '../widgets.dart';
 import 'device_screen.dart';
 
-/// Pestaña Vehículos: lista con el estado de cada vehículo.
+/// Panel Vehículos: sube sobre el mapa con el estado de cada vehículo.
 /// Si el usuario tiene varios vehículos agrupados, aparecen filtros por grupo.
-class VehiclesTab extends StatefulWidget {
+class VehiclesSheet extends StatefulWidget {
+  final ScrollController scrollController;
   final Future<void> Function() onRefresh;
-  const VehiclesTab({super.key, required this.onRefresh});
+  const VehiclesSheet({super.key, required this.scrollController, required this.onRefresh});
 
   @override
-  State<VehiclesTab> createState() => _VehiclesTabState();
+  State<VehiclesSheet> createState() => _VehiclesSheetState();
 }
 
-class _VehiclesTabState extends State<VehiclesTab> {
+class _VehiclesSheetState extends State<VehiclesSheet> {
   int? _group; // null = todos
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Vehículos')),
-      body: ListenableBuilder(
+    return ListenableBuilder(
         listenable: api,
         builder: (context, _) {
           final all = api.devices.values.toList()
             ..sort((a, b) => a.name.compareTo(b.name));
           if (all.isEmpty) {
-            return const CenteredMessage(
-              icon: Icons.directions_car_outlined,
-              text: 'Todavía no tienes vehículos asociados a tu cuenta.',
+            return ListView(
+              controller: widget.scrollController,
+              children: const [
+                SheetHeader(title: 'Vehículos'),
+                CenteredMessage(
+                  icon: Icons.directions_car_outlined,
+                  text: 'Todavía no tienes vehículos asociados a tu cuenta.',
+                ),
+              ],
             );
           }
           // Grupos que realmente tienen vehículos de este usuario.
@@ -48,8 +53,10 @@ class _VehiclesTabState extends State<VehiclesTab> {
           return RefreshIndicator(
             onRefresh: widget.onRefresh,
             child: ListView(
-              padding: EdgeInsets.fromLTRB(12, 12, 12, navBarSpace(context)),
+              controller: widget.scrollController,
+              padding: EdgeInsets.fromLTRB(12, 0, 12, 16 + MediaQuery.of(context).padding.bottom),
               children: [
+                SheetHeader(title: 'Vehículos', subtitle: '${all.length} en total'),
                 if (showGroups) ...[
                   SizedBox(
                     height: 40,
@@ -74,9 +81,13 @@ class _VehiclesTabState extends State<VehiclesTab> {
                   DeviceCard(
                     device: d,
                     position: api.positions[d.id],
-                    onTap: () => Navigator.of(context).push(MaterialPageRoute(
-                      builder: (_) => DeviceScreen(deviceId: d.id),
-                    )),
+                    onTap: () {
+                      final nav = Navigator.of(context);
+                      nav.pop();
+                      nav.push(MaterialPageRoute(
+                        builder: (_) => DeviceScreen(deviceId: d.id),
+                      ));
+                    },
                   ),
                   const SizedBox(height: 8),
                 ],
@@ -84,7 +95,6 @@ class _VehiclesTabState extends State<VehiclesTab> {
             ),
           );
         },
-      ),
     );
   }
 

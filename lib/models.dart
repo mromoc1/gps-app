@@ -209,3 +209,35 @@ class Geofence {
     return 'POLYGON (($body))';
   }
 }
+
+/// Un viaje: desde que el vehículo parte hasta que se detiene
+/// (Traccar lo calcula en /api/reports/trips).
+class Trip {
+  final DateTime? start;
+  final DateTime? end;
+  final double distanceKm;
+  final double maxSpeedKmh;
+  final String? startAddress;
+  final String? endAddress;
+
+  const Trip({
+    required this.start,
+    required this.end,
+    required this.distanceKm,
+    required this.maxSpeedKmh,
+    this.startAddress,
+    this.endAddress,
+  });
+
+  Duration get duration =>
+      start == null || end == null ? Duration.zero : end!.difference(start!);
+
+  factory Trip.fromJson(Map<String, dynamic> j) => Trip(
+        start: _date(j['startTime']),
+        end: _date(j['endTime']),
+        distanceKm: _double(j['distance']) / 1000,
+        maxSpeedKmh: _double(j['maxSpeed']) * 1.852, // nudos a km/h
+        startAddress: j['startAddress']?.toString(),
+        endAddress: j['endAddress']?.toString(),
+      );
+}

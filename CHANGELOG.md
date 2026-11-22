@@ -14,6 +14,19 @@ y sube en cada compilación. Cada APK publicado se etiqueta como
 Cada versión necesita su sección `## X.Y.Z` en este archivo: sin ella la
 compilación falla. El texto de la sección aparece como "Novedades" en el release.
 
+## 0.6.0 – 2026-11-22
+
+- **Nombre de la persona** en la barra superior del mapa, junto al estado
+  de conexión (en vez de "GPS App").
+- **Botón desplegable** abajo a la derecha, sobre la barra de menú, con
+  "Ver todos" y "Zonas". Se quitaron los botones sueltos de arriba.
+- **Vehículos y Alertas** ahora suben como panel sobre el mapa, igual que al
+  tocar un vehículo, en vez de abrir una página aparte.
+- **Historial por viajes**: el día se separa en cada recorrido con su hora de
+  salida y llegada, kilómetros, duración y velocidad máxima. Al tocar un
+  viaje se ve solo esa ruta; "Todo el día" muestra el recorrido completo.
+- Se quitó la sección "Construida con" del Perfil.
+
 ## 0.5.0 – 2026-11-22
 
 - **Google Maps normal en todos los mapas** (mapa general, detalle del

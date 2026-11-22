@@ -4,13 +4,14 @@ import '../api.dart';
 import '../brand.dart';
 import '../push.dart';
 import '../widgets.dart';
-import 'alerts_tab.dart';
+import 'alerts_sheet.dart';
 import 'map_tab.dart';
 import 'profile_tab.dart';
-import 'vehicles_tab.dart';
+import 'vehicles_sheet.dart';
 
 /// Pantalla principal: mapa a pantalla completa y barra de navegación
-/// flotante con las pestañas Mapa, Vehículos, Alertas y Perfil.
+/// flotante. Vehículos y Alertas suben como paneles sobre el mapa;
+/// Perfil es una página.
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -19,7 +20,8 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  int _tab = 0;
+  int _page = 0; // 0 = mapa, 1 = perfil
+  int _nav = 0; // botón marcado en la barra (0 mapa, 1 vehículos, 2 alertas, 3 perfil)
   bool _loading = true;
   String? _error;
 
@@ -47,24 +49,46 @@ class _HomeScreenState extends State<HomeScreen> {
     if (mounted) setState(() => _loading = false);
   }
 
-  void _goToMap() => setState(() => _tab = 0);
+  void _goToMap() => setState(() {
+        _page = 0;
+        _nav = 0;
+      });
+
+  Future<void> _onNav(int i) async {
+    if (i == 0 || i == 3) {
+      setState(() {
+        _page = i == 0 ? 0 : 1;
+        _nav = i;
+      });
+      return;
+    }
+    setState(() {
+      _page = 0;
+      _nav = i;
+    });
+    await showMapSheet(
+      context,
+      (controller) => i == 1
+          ? VehiclesSheet(scrollController: controller, onRefresh: _load)
+          : AlertsSheet(scrollController: controller),
+    );
+    if (mounted && _nav == i) setState(() => _nav = 0);
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       extendBody: true,
       body: IndexedStack(
-        index: _tab,
+        index: _page,
         children: [
           MapTab(loading: _loading, error: _error, onRetry: _load),
-          VehiclesTab(onRefresh: _load),
-          const AlertsTab(),
           ProfileTab(onShowMap: _goToMap),
         ],
       ),
       bottomNavigationBar: _FloatingNavBar(
-        index: _tab,
-        onChanged: (i) => setState(() => _tab = i),
+        index: _nav,
+        onChanged: _onNav,
       ),
     );
   }

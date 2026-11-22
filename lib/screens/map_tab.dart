@@ -3,7 +3,6 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 import '../api.dart';
 import '../brand.dart';
-import '../config.dart';
 import '../map_utils.dart';
 import '../marker_icons.dart';
 import '../models.dart';
@@ -34,6 +33,7 @@ class _MapTabState extends State<MapTab> {
   GoogleMapController? _map;
   bool _centered = false;
   List<Geofence> _zones = [];
+  bool _menuOpen = false;
 
   @override
   void initState() {
@@ -120,33 +120,45 @@ class _MapTabState extends State<MapTab> {
                 zoomControlsEnabled: false,
                 mapToolbarEnabled: false,
                 rotateGesturesEnabled: false,
-                padding: EdgeInsets.only(top: pad.top + 70, bottom: bottom),
+                padding: EdgeInsets.only(top: pad.top + 70, bottom: bottom + 64),
+                onTap: (_) {
+                  if (_menuOpen) setState(() => _menuOpen = false);
+                },
               ),
             ),
-            // Barra superior: marca + estado de conexión + botones.
+            // Barra superior: nombre de la persona + estado de conexión.
             Positioned(
               top: pad.top + 12,
               left: 12,
               right: 12,
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _TopPill(vehicles: list.length),
-                  const Spacer(),
-                  Column(
-                    children: [
-                      MapButton(
-                        icon: Icons.center_focus_strong,
-                        tooltip: 'Ver todos',
-                        onPressed: () => _centerAll(force: true),
-                      ),
-                      const SizedBox(height: 10),
-                      MapButton(
-                        icon: Icons.fence,
-                        tooltip: 'Zonas',
-                        onPressed: _openZones,
-                      ),
-                    ],
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: _TopPill(vehicles: list.length),
+              ),
+            ),
+            // Botón desplegable abajo a la derecha, sobre la barra de menú.
+            Positioned(
+              right: 12,
+              bottom: bottom + 4,
+              child: _MapMenu(
+                open: _menuOpen,
+                onToggle: () => setState(() => _menuOpen = !_menuOpen),
+                actions: [
+                  _MenuAction(
+                    icon: Icons.center_focus_strong,
+                    label: 'Ver todos',
+                    onTap: () {
+                      setState(() => _menuOpen = false);
+                      _centerAll(force: true);
+                    },
+                  ),
+                  _MenuAction(
+                    icon: Icons.fence,
+                    label: 'Zonas',
+                    onTap: () {
+                      setState(() => _menuOpen = false);
+                      _openZones();
+                    },
                   ),
                 ],
               ),
@@ -205,9 +217,18 @@ class _TopPill extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text(kAppName,
-                    style: t.textTheme.titleSmall
-                        ?.copyWith(fontWeight: FontWeight.w700)),
+                ConstrainedBox(
+                  constraints: BoxConstraints(
+                      maxWidth: MediaQuery.of(context).size.width - 110),
+                  child: Text(
+                      api.userName.isNotEmpty
+                          ? api.userName
+                          : (api.userEmail.isNotEmpty ? api.userEmail : 'Mi cuenta'),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: t.textTheme.titleSmall
+                          ?.copyWith(fontWeight: FontWeight.w700)),
+                ),
                 Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -235,6 +256,92 @@ class _TopPill extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _MenuAction {
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+  const _MenuAction({required this.icon, required this.label, required this.onTap});
+}
+
+/// Botón redondo que al tocarlo despliega hacia arriba las opciones del mapa.
+class _MapMenu extends StatelessWidget {
+  final bool open;
+  final VoidCallback onToggle;
+  final List<_MenuAction> actions;
+  const _MapMenu({required this.open, required this.onToggle, required this.actions});
+
+  @override
+  Widget build(BuildContext context) {
+    final t = Theme.of(context);
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        AnimatedSize(
+          duration: const Duration(milliseconds: 180),
+          curve: Curves.easeOut,
+          alignment: Alignment.bottomRight,
+          child: !open
+              ? const SizedBox(width: 0, height: 0)
+              : Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    for (final a in actions)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 10),
+                        child: Material(
+                          color: t.colorScheme.surface,
+                          elevation: 3,
+                          borderRadius: BorderRadius.circular(kRadiusButton),
+                          child: InkWell(
+                            borderRadius: BorderRadius.circular(kRadiusButton),
+                            onTap: a.onTap,
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(a.label,
+                                      style: t.textTheme.labelLarge
+                                          ?.copyWith(fontWeight: FontWeight.w600)),
+                                  const SizedBox(width: 10),
+                                  Icon(a.icon, size: 20, color: t.colorScheme.primary),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+        ),
+        Material(
+          color: open ? t.colorScheme.primary : t.colorScheme.surface,
+          elevation: 4,
+          borderRadius: BorderRadius.circular(kRadiusCard),
+          child: InkWell(
+            borderRadius: BorderRadius.circular(kRadiusCard),
+            onTap: onToggle,
+            child: SizedBox(
+              width: 52,
+              height: 52,
+              child: AnimatedRotation(
+                turns: open ? 0.125 : 0,
+                duration: const Duration(milliseconds: 180),
+                child: Icon(
+                  open ? Icons.add : Icons.layers_outlined,
+                  color: open ? t.colorScheme.onPrimary : t.colorScheme.primary,
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

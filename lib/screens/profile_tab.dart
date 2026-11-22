@@ -220,34 +220,6 @@ class ProfileTab extends StatelessWidget {
                   ),
                 ),
               ]),
-              const SizedBox(height: 12),
-              const _Section(title: 'Construida con', children: [
-                ListTile(
-                  leading: Icon(Icons.flutter_dash),
-                  title: Text('Flutter y Dart'),
-                  subtitle: Text('Un solo código para Android y iPhone'),
-                ),
-                ListTile(
-                  leading: Icon(Icons.map_outlined),
-                  title: Text('Google Maps'),
-                  subtitle: Text('Mapa normal de Google'),
-                ),
-                ListTile(
-                  leading: Icon(Icons.notifications_active_outlined),
-                  title: Text('Firebase'),
-                  subtitle: Text('Notificaciones push con la app cerrada'),
-                ),
-                ListTile(
-                  leading: Icon(Icons.satellite_alt),
-                  title: Text('Traccar'),
-                  subtitle: Text('Servidor que recibe los GPS (API y tiempo real)'),
-                ),
-                ListTile(
-                  leading: Icon(Icons.router_outlined),
-                  title: Text('Teltonika FMC920'),
-                  subtitle: Text('Equipo GPS 4G instalado en el vehículo'),
-                ),
-              ]),
               const SizedBox(height: 20),
               OutlinedButton.icon(
                 style: OutlinedButton.styleFrom(

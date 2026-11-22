@@ -237,3 +237,61 @@ class CenteredMessage extends StatelessWidget {
     );
   }
 }
+
+
+/// Título de un panel que sube desde abajo.
+class SheetHeader extends StatelessWidget {
+  final String title;
+  final String? subtitle;
+  final Widget? trailing;
+  const SheetHeader({super.key, required this.title, this.subtitle, this.trailing});
+
+  @override
+  Widget build(BuildContext context) {
+    final t = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(4, 0, 0, 8),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title,
+                    style: t.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700)),
+                if (subtitle != null)
+                  Text(subtitle!,
+                      style: t.textTheme.bodySmall
+                          ?.copyWith(color: t.colorScheme.onSurfaceVariant)),
+              ],
+            ),
+          ),
+          if (trailing != null) trailing!,
+        ],
+      ),
+    );
+  }
+}
+
+/// Abre un panel que sube sobre el mapa, igual que al tocar un vehículo,
+/// y que se puede arrastrar para agrandarlo o cerrarlo.
+Future<void> showMapSheet(
+  BuildContext context,
+  Widget Function(ScrollController controller) builder,
+) {
+  return showModalBottomSheet<void>(
+    context: context,
+    isScrollControlled: true,
+    useSafeArea: true,
+    showDragHandle: true,
+    builder: (_) => DraggableScrollableSheet(
+      expand: false,
+      initialChildSize: 0.55,
+      minChildSize: 0.3,
+      maxChildSize: 0.95,
+      snap: true,
+      snapSizes: const [0.55],
+      builder: (_, controller) => builder(controller),
+    ),
+  );
+}
