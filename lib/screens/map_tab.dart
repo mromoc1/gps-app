@@ -6,7 +6,6 @@ import '../brand.dart';
 import '../map_utils.dart';
 import '../marker_icons.dart';
 import '../models.dart';
-import '../util.dart';
 import '../widgets.dart';
 import 'geofences_screen.dart';
 import 'vehicle_panel.dart';
