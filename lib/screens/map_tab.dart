@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../api.dart';
 import '../brand.dart';
 import '../map_utils.dart';
 import '../marker_icons.dart';
 import '../models.dart';
+import '../util.dart';
 import '../widgets.dart';
 import 'geofences_screen.dart';
 import 'vehicle_panel.dart';
@@ -102,6 +104,30 @@ class _MapTabState extends State<MapTab> {
     if (mounted) setState(() => _focused = null);
   }
 
+  /// Abre WhatsApp con un mensaje ya escrito para soporte. El número está
+  /// en el servidor de Traccar (atributos soporteWhatsapp y soporteNombre).
+  Future<void> _contactSupport() async {
+    try {
+      final c = await api.supportContact();
+      if (!mounted) return;
+      if (c == null) {
+        showMessage(context, 'El contacto de soporte todavía no está configurado.');
+        return;
+      }
+      final who = api.userName.isNotEmpty ? api.userName : api.userEmail;
+      final hello = c.name.isNotEmpty ? 'Hola ${c.name}' : 'Hola';
+      final text = '$hello, necesito ayuda con GPS App.'
+          '${who.isNotEmpty ? ' Mi cuenta: $who.' : ''}';
+      final uri = Uri.https('wa.me', '/${c.phone}', {'text': text});
+      final ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
+      if (!ok && mounted) showMessage(context, 'No se pudo abrir WhatsApp.');
+    } on ApiException catch (e) {
+      if (mounted) showMessage(context, e.message);
+    } catch (_) {
+      if (mounted) showMessage(context, 'No se pudo abrir WhatsApp.');
+    }
+  }
+
   Future<void> _openZones() async {
     await Navigator.of(context)
         .push(MaterialPageRoute(builder: (_) => const GeofencesScreen()));
@@ -195,6 +221,14 @@ class _MapTabState extends State<MapTab> {
                     onTap: () {
                       setState(() => _menuOpen = false);
                       _openZones();
+                    },
+                  ),
+                  _MenuAction(
+                    icon: Icons.support_agent,
+                    label: 'Soporte',
+                    onTap: () {
+                      setState(() => _menuOpen = false);
+                      _contactSupport();
                     },
                   ),
                 ],
