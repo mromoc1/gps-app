@@ -1,7 +1,22 @@
 import 'package:flutter/material.dart';
 
-const Color kBrandNavy = Color(0xFF12355B);
-const Color kBrandOrange = Color(0xFFF28C28);
+/// Paleta azul de la marca.
+/// Azul principal: botones, íconos, barra de menú y vehículos en el mapa.
+const Color kBrandBlue = Color(0xFF1D4ED8);
+
+/// Azul profundo: fondo del logo y final del degradado.
+const Color kBrandDeep = Color(0xFF0B2A6F);
+
+/// Celeste de acento: detalles, zonas y punto del logo.
+const Color kBrandAccent = Color(0xFF0EA5E9);
+const Color kBrandSky = Color(0xFF38BDF8);
+
+/// Degradado de la marca (logo e ícono de la app).
+const LinearGradient kBrandGradient = LinearGradient(
+  begin: Alignment.topLeft,
+  end: Alignment.bottomRight,
+  colors: [Color(0xFF2563EB), kBrandDeep],
+);
 
 /// Rojo de vehículo comprometido (marcador, etiqueta y botón de alerta).
 const Color kCompromisedColor = Color(0xFFD32F2F);
@@ -24,8 +39,15 @@ class BrandLogo extends StatelessWidget {
       width: size,
       height: size,
       decoration: BoxDecoration(
-        color: kBrandNavy,
+        gradient: kBrandGradient,
         borderRadius: BorderRadius.circular(size * 0.28),
+        boxShadow: [
+          BoxShadow(
+            color: kBrandBlue.withValues(alpha: 0.25),
+            blurRadius: size * 0.12,
+            offset: Offset(0, size * 0.04),
+          ),
+        ],
       ),
       child: Stack(
         alignment: Alignment.center,
@@ -38,9 +60,9 @@ class BrandLogo extends StatelessWidget {
               width: size * 0.2,
               height: size * 0.2,
               decoration: BoxDecoration(
-                color: kBrandOrange,
+                color: kBrandSky,
                 shape: BoxShape.circle,
-                border: Border.all(color: kBrandNavy, width: size * 0.03),
+                border: Border.all(color: const Color(0xFF1E40AF), width: size * 0.03),
               ),
             ),
           ),

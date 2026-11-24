@@ -14,6 +14,17 @@ y sube en cada compilación. Cada APK publicado se etiqueta como
 Cada versión necesita su sección `## X.Y.Z` en este archivo: sin ella la
 compilación falla. El texto de la sección aparece como "Novedades" en el release.
 
+## 0.9.1 – 2026-11-24
+
+- **Nueva paleta azul**: azul intenso (#1D4ED8) en botones, íconos, barra de
+  menú, interruptores y vehículos en el mapa; celeste (#0EA5E9) en los
+  detalles, como las zonas y sus esquinas. Reemplaza al azul marino y al
+  naranjo.
+- **Logo e ícono de la app** con degradado azul y punto celeste. El ícono
+  adaptativo de Android usa el mismo degradado de fondo.
+- Los colores de aviso no cambian: verde (motor encendido), naranjo
+  (reconectando, vence pronto) y rojo (comprometido, corte de motor).
+
 ## 0.9.0 – 2026-11-22
 
 - **Vehículo comprometido**: en el panel del vehículo hay un botón con ícono

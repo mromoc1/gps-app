@@ -25,9 +25,10 @@ class GpsApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = ColorScheme.fromSeed(
-      seedColor: kBrandNavy,
-      primary: kBrandNavy,
-      secondary: kBrandOrange,
+      seedColor: kBrandBlue,
+      primary: kBrandBlue,
+      secondary: kBrandAccent,
+      onSecondary: Colors.white,
     );
     return MaterialApp(
       title: kAppName,

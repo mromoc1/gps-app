@@ -1,7 +1,7 @@
 name: gps_app
 description: GPS App - prototipo de app para clientes (conectada a Traccar).
 publish_to: 'none'
-version: 0.9.0+1
+version: 0.9.1+1
 
 environment:
   sdk: '>=3.4.0 <4.0.0'
@@ -31,5 +31,5 @@ flutter_launcher_icons:
   android: true
   ios: false
   image_path: "assets/icon.png"
-  adaptive_icon_background: "#12355B"
+  adaptive_icon_background: "assets/icon_bg.png"
   adaptive_icon_foreground: "assets/icon_fg.png"

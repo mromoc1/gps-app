@@ -27,13 +27,13 @@ class MarkerIcons {
     }
     _cache['start'] = await _circle(Colors.green.shade600, Icons.play_arrow, dpr, size: 30);
     _cache['end'] = await _circle(Colors.red.shade600, Icons.flag, dpr, size: 30);
-    _cache['vertex'] = await _circle(kBrandOrange, Icons.circle, dpr, size: 22);
+    _cache['vertex'] = await _circle(kBrandAccent, Icons.circle, dpr, size: 22);
   }
 
   static final Map<String, Color> _vehicleColors = {
     'offline': Colors.grey.shade600,
     'ignition': Colors.green.shade600,
-    'online': kBrandNavy,
+    'online': kBrandBlue,
     'compromised': kCompromisedColor,
   };
 
