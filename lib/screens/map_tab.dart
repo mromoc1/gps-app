@@ -4,6 +4,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../api.dart';
 import '../brand.dart';
+import '../config.dart';
 import '../map_utils.dart';
 import '../marker_icons.dart';
 import '../models.dart';
@@ -116,7 +117,7 @@ class _MapTabState extends State<MapTab> {
       }
       final who = api.userName.isNotEmpty ? api.userName : api.userEmail;
       final hello = c.name.isNotEmpty ? 'Hola ${c.name}' : 'Hola';
-      final text = '$hello, necesito ayuda con GPS App.'
+      final text = '$hello, necesito ayuda con $kAppName.'
           '${who.isNotEmpty ? ' Mi cuenta: $who.' : ''}';
       final uri = Uri.https('wa.me', '/${c.phone}', {'text': text});
       final ok = await launchUrl(uri, mode: LaunchMode.externalApplication);

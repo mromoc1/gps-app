@@ -21,7 +21,9 @@ if perm not in text:
     end = text.index(">", start) + 1
     text = text[:end] + "\n    " + perm + text[end:]
 
-text = text.replace('android:label="gps_app"', 'android:label="GPS App"')
+# Nombre visible en el celular. El paquete (cl.gpsapp.gps_app) no cambia:
+# cambiarlo obligaría a desinstalar y rompería Google Maps y Firebase.
+text = text.replace('android:label="gps_app"', 'android:label="SIRV GPS"')
 
 maps_meta = (
     '<meta-data android:name="com.google.android.geo.API_KEY" '
