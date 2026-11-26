@@ -55,7 +55,7 @@ jobs:
             --dart-define=HAS_GOOGLE_MAPS_KEY="$HAS_MAPS"
           cp build/app/outputs/flutter-apk/app-release.apk "gps-app-prueba-${GITHUB_SHA::7}.apk"
 
-      - uses: actions/upload-artifact@v5
+      - uses: actions/upload-artifact@v7
         with:
           name: gps-app-prueba
           path: gps-app-prueba-*.apk
