@@ -27,7 +27,7 @@ if not log:
     log = "- Sin cambios de código desde la versión anterior."
 
 firma = (
-    "Firma oficial de GPS App"
+    "Firma oficial de SIRV GPS"
     if signing == "oficial"
     else "⚠️ Firma de depuración (faltan los secretos de la llave oficial)"
 )

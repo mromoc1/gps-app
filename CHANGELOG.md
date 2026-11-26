@@ -14,6 +14,14 @@ y sube en cada compilación. Cada APK publicado se etiqueta como
 Cada versión necesita su sección `## X.Y.Z` en este archivo: sin ella la
 compilación falla. El texto de la sección aparece como "Novedades" en el release.
 
+## 0.10.1 – 2026-11-26
+
+- **Nuevo nombre: SIRV GPS.** Cambia el nombre que se ve bajo el ícono del
+  celular, en la pantalla de inicio de sesión, en Perfil, en el mensaje de
+  soporte por WhatsApp y en los releases de GitHub. El identificador interno
+  (`cl.gpsapp.gps_app`) se mantiene, así que se actualiza encima sin
+  desinstalar y siguen funcionando Google Maps y las notificaciones.
+
 ## 0.10.0 – 2026-11-26
 
 - **Soporte**: nueva opción en el botón desplegable del mapa que abre WhatsApp

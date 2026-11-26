@@ -19,7 +19,7 @@ concurrency:
 
 env:
   KEEP_RELEASES: 10
-  # Huella SHA-256 del certificado oficial de GPS App (no es secreta).
+  # Huella SHA-256 del certificado oficial de SIRV GPS (no es secreta).
   EXPECTED_CERT: 372fc8a88d1edc0649dd460676d9e961ada3dd2cd73cb1f8c0aba0a81235ef97
   REPO_URL: https://github.com/${{ github.repository }}
 
@@ -53,7 +53,7 @@ jobs:
             echo "APK=gps-app-v$VERSION-b$BUILD.apk"
             echo "PREV_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo -)"
           } >> "$GITHUB_ENV"
-          echo "### GPS App $VERSION (compilación $BUILD)" >> "$GITHUB_STEP_SUMMARY"
+          echo "### SIRV GPS $VERSION (compilación $BUILD)" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Revisar CHANGELOG
         run: python3 tool/version.py check
@@ -132,7 +132,7 @@ jobs:
         run: |
           gh release create "$TAG" "$APK" gps-app.apk "$APK.sha256" \
             --target "$GITHUB_SHA" \
-            --title "GPS App $VERSION (compilación $BUILD)" \
+            --title "SIRV GPS $VERSION (compilación $BUILD)" \
             --notes-file notes.md \
             --latest
           echo "Descarga fija: $REPO_URL/releases/latest/download/gps-app.apk" >> "$GITHUB_STEP_SUMMARY"
