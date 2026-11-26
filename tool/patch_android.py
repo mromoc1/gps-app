@@ -4,6 +4,7 @@
 - Pone el nombre visible de la app.
 - Agrega la clave de Google Maps al manifiesto. El valor llega al compilar
   desde la variable de entorno GOOGLE_MAPS_API_KEY (secreto de GitHub).
+- Declara que la app abre enlaces https (WhatsApp de soporte) en Android 11+.
 - Configura la firma oficial: si existe la variable ANDROID_KEYSTORE_PATH al
   compilar, el APK se firma con la llave oficial; si no, con la de depuración.
 """
@@ -30,6 +31,21 @@ if "com.google.android.geo.API_KEY" not in text:
     start = text.index("<application")
     end = text.index(">", start) + 1
     text = text[:end] + "\n        " + maps_meta + text[end:]
+
+# Android 11+: declarar que la app abre enlaces https (WhatsApp de soporte).
+queries = (
+    '<queries>\n'
+    '        <intent>\n'
+    '            <action android:name="android.intent.action.VIEW"/>\n'
+    '            <data android:scheme="https"/>\n'
+    '        </intent>\n'
+    '    </queries>'
+)
+if 'android:scheme="https"' not in text:
+    if "<queries>" in text:
+        text = text.replace("<queries>", queries.rsplit("</queries>", 1)[0], 1)
+    else:
+        text = text.replace("</manifest>", "    " + queries + "\n</manifest>", 1)
 
 manifest.write_text(text, encoding="utf-8")
 print("Manifiesto listo")

@@ -341,6 +341,19 @@ class TraccarApi extends ChangeNotifier {
       .split(',')
       .contains(token);
 
+  // ----------------------------------------------------- soporte
+
+  /// Contacto de soporte por WhatsApp, guardado en los atributos del
+  /// servidor de Traccar (`soporteWhatsapp` y `soporteNombre`), para poder
+  /// cambiarlo sin publicar otra versión. Devuelve null si no está configurado.
+  Future<({String phone, String name})?> supportContact() async {
+    final s = await _getJson('/api/server') as Map<String, dynamic>;
+    final attrs = (s['attributes'] as Map?) ?? const {};
+    final phone = (attrs['soporteWhatsapp'] ?? '').toString().replaceAll(RegExp(r'[^0-9]'), '');
+    if (phone.isEmpty) return null;
+    return (phone: phone, name: (attrs['soporteNombre'] ?? '').toString().trim());
+  }
+
   // ----------------------------------------------------- vehículos
 
   /// El usuario puede editar sus vehículos (marcar comprometido).

@@ -14,6 +14,15 @@ y sube en cada compilación. Cada APK publicado se etiqueta como
 Cada versión necesita su sección `## X.Y.Z` en este archivo: sin ella la
 compilación falla. El texto de la sección aparece como "Novedades" en el release.
 
+## 0.10.0 – 2026-11-26
+
+- **Soporte**: nueva opción en el botón desplegable del mapa que abre WhatsApp
+  con un mensaje ya escrito para soporte (incluye el nombre o correo de la
+  cuenta). El número y el nombre de la persona de soporte se leen del servidor
+  de Traccar (atributos `soporteWhatsapp` y `soporteNombre`), así que se pueden
+  cambiar sin publicar otra versión.
+- Android: se declara que la app abre enlaces https (necesario en Android 11+).
+
 ## 0.9.1 – 2026-11-24
 
 - **Nueva paleta azul**: azul intenso (#1D4ED8) en botones, íconos, barra de
