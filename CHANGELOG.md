@@ -14,6 +14,14 @@ y sube en cada compilación. Cada APK publicado se etiqueta como
 Cada versión necesita su sección `## X.Y.Z` en este archivo: sin ella la
 compilación falla. El texto de la sección aparece como "Novedades" en el release.
 
+## 0.11.1 – 2026-11-27
+
+- **Menús en azul más oscuro** (#1E40AF): barra superior del mapa, barra de
+  menú inferior y botón desplegable.
+- **Botón desplegable en azul**: las opciones (Ver todos, Zonas, Soporte) van
+  en azul oscuro con texto blanco. El botón es azul oscuro cerrado y se pone
+  blanco al abrirlo.
+
 ## 0.11.0 – 2026-11-27
 
 - **Ícono nuevo de SIRV GPS**: la S dibujada como camino (blanco con línea
