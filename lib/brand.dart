@@ -11,6 +11,10 @@ const Color kBrandDeep = Color(0xFF0B2A6F);
 const Color kBrandAccent = Color(0xFF0EA5E9);
 const Color kBrandSky = Color(0xFF38BDF8);
 
+/// Azul más oscuro de los menús: barras superior e inferior y botón
+/// desplegable del mapa.
+const Color kMenuBlue = Color(0xFF1E40AF);
+
 /// Texto e íconos secundarios sobre fondo azul (barras superior e inferior).
 const Color kOnBlueMuted = Color(0xFFBFD0F7);
 

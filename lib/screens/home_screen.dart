@@ -132,7 +132,7 @@ class _FloatingNavBar extends StatelessWidget {
               height: kNavBarHeight,
               selectedIndex: index,
               onDestinationSelected: onChanged,
-              backgroundColor: kBrandBlue,
+              backgroundColor: kMenuBlue,
               surfaceTintColor: Colors.transparent,
               indicatorColor: Colors.white.withValues(alpha: 0.22),
               labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,

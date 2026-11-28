@@ -275,7 +275,7 @@ class _TopPill extends StatelessWidget {
     final t = Theme.of(context);
     final live = api.socketConnected;
     return Material(
-      color: kBrandBlue,
+      color: kMenuBlue,
       elevation: 3,
       borderRadius: BorderRadius.circular(kRadiusCard),
       child: Padding(
@@ -375,7 +375,7 @@ class _MapMenu extends StatelessWidget {
                       Padding(
                         padding: const EdgeInsets.only(bottom: 10),
                         child: Material(
-                          color: t.colorScheme.surface,
+                          color: kMenuBlue,
                           elevation: 3,
                           borderRadius: BorderRadius.circular(kRadiusButton),
                           child: InkWell(
@@ -387,10 +387,10 @@ class _MapMenu extends StatelessWidget {
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
                                   Text(a.label,
-                                      style: t.textTheme.labelLarge
-                                          ?.copyWith(fontWeight: FontWeight.w600)),
+                                      style: t.textTheme.labelLarge?.copyWith(
+                                          fontWeight: FontWeight.w600, color: Colors.white)),
                                   const SizedBox(width: 10),
-                                  Icon(a.icon, size: 20, color: t.colorScheme.primary),
+                                  Icon(a.icon, size: 20, color: kOnBlueMuted),
                                 ],
                               ),
                             ),
@@ -401,7 +401,7 @@ class _MapMenu extends StatelessWidget {
                 ),
         ),
         Material(
-          color: open ? t.colorScheme.primary : t.colorScheme.surface,
+          color: open ? Colors.white : kMenuBlue,
           elevation: 4,
           borderRadius: BorderRadius.circular(kRadiusCard),
           child: InkWell(
@@ -415,7 +415,7 @@ class _MapMenu extends StatelessWidget {
                 duration: const Duration(milliseconds: 180),
                 child: Icon(
                   open ? Icons.add : Icons.layers_outlined,
-                  color: open ? t.colorScheme.onPrimary : t.colorScheme.primary,
+                  color: open ? kMenuBlue : Colors.white,
                 ),
               ),
             ),
