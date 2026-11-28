@@ -14,6 +14,16 @@ y sube en cada compilación. Cada APK publicado se etiqueta como
 Cada versión necesita su sección `## X.Y.Z` en este archivo: sin ella la
 compilación falla. El texto de la sección aparece como "Novedades" en el release.
 
+## 0.11.0 – 2026-11-27
+
+- **Ícono nuevo de SIRV GPS**: la S dibujada como camino (blanco con línea
+  central azul) que termina en un escudo celeste con check, sobre azul
+  profundo. Ícono adaptativo de Android con la figura dentro de la zona
+  segura, para que no se corte en celulares que lo recortan en círculo.
+- El logo dentro de la app (inicio de sesión, barra superior del mapa,
+  Perfil y pantalla de carga) usa el mismo dibujo.
+- Los dibujos originales quedan en `assets/fuente/` (SVG).
+
 ## 0.10.2 – 2026-11-27
 
 - **Barras azules**: la barra superior del mapa (nombre y conexión) y la barra

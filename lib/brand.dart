@@ -32,44 +32,37 @@ const double kRadiusSheet = 16;
 RoundedRectangleBorder roundedShape(double r) =>
     RoundedRectangleBorder(borderRadius: BorderRadius.circular(r));
 
+/// Logo de SIRV GPS (el mismo dibujo del ícono de la app: la S como camino
+/// con un escudo). Fuente en assets/fuente/icono.svg.
 class BrandLogo extends StatelessWidget {
   final double size;
   const BrandLogo({super.key, this.size = 72});
 
   @override
   Widget build(BuildContext context) {
+    final radius = BorderRadius.circular(size * 0.23);
     return Container(
       width: size,
       height: size,
       decoration: BoxDecoration(
-        gradient: kBrandGradient,
-        borderRadius: BorderRadius.circular(size * 0.28),
+        borderRadius: radius,
         boxShadow: [
           BoxShadow(
-            color: kBrandBlue.withValues(alpha: 0.25),
+            color: kBrandDeep.withValues(alpha: 0.25),
             blurRadius: size * 0.12,
             offset: Offset(0, size * 0.04),
           ),
         ],
       ),
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          Icon(Icons.location_on, color: Colors.white, size: size * 0.6),
-          Positioned(
-            right: size * 0.18,
-            top: size * 0.16,
-            child: Container(
-              width: size * 0.2,
-              height: size * 0.2,
-              decoration: BoxDecoration(
-                color: kBrandSky,
-                shape: BoxShape.circle,
-                border: Border.all(color: const Color(0xFF1E40AF), width: size * 0.03),
-              ),
-            ),
-          ),
-        ],
+      child: ClipRRect(
+        borderRadius: radius,
+        child: Image.asset(
+          'assets/logo.png',
+          width: size,
+          height: size,
+          fit: BoxFit.cover,
+          filterQuality: FilterQuality.medium,
+        ),
       ),
     );
   }
