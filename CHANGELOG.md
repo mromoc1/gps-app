@@ -14,6 +14,13 @@ y sube en cada compilación. Cada APK publicado se etiqueta como
 Cada versión necesita su sección `## X.Y.Z` en este archivo: sin ella la
 compilación falla. El texto de la sección aparece como "Novedades" en el release.
 
+## 0.10.2 – 2026-11-27
+
+- **Barras azules**: la barra superior del mapa (nombre y conexión) y la barra
+  de menú inferior pasan al azul de la marca (#1D4ED8), el mismo del botón
+  desplegable. Texto e íconos en blanco; lo no elegido en celeste. El logo de
+  la barra superior va sobre un cuadrado blanco.
+
 ## 0.10.1 – 2026-11-26
 
 - **Nuevo nombre: SIRV GPS.** Cambia el nombre que se ve bajo el ícono del

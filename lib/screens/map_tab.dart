@@ -275,7 +275,7 @@ class _TopPill extends StatelessWidget {
     final t = Theme.of(context);
     final live = api.socketConnected;
     return Material(
-      color: t.colorScheme.surface,
+      color: kBrandBlue,
       elevation: 3,
       borderRadius: BorderRadius.circular(kRadiusCard),
       child: Padding(
@@ -283,7 +283,15 @@ class _TopPill extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const BrandLogo(size: 30),
+            // Logo sobre un cuadrado blanco para que no se pierda en el azul.
+            Container(
+              padding: const EdgeInsets.all(2),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const BrandLogo(size: 28),
+            ),
             const SizedBox(width: 10),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -299,7 +307,7 @@ class _TopPill extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: t.textTheme.titleSmall
-                          ?.copyWith(fontWeight: FontWeight.w700)),
+                          ?.copyWith(fontWeight: FontWeight.w700, color: Colors.white)),
                 ),
                 Row(
                   mainAxisSize: MainAxisSize.min,
@@ -310,8 +318,8 @@ class _TopPill extends StatelessWidget {
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
                         color: live
-                            ? Colors.green.shade600
-                            : Colors.orange.shade700,
+                            ? Colors.greenAccent.shade400
+                            : Colors.orange.shade300,
                       ),
                     ),
                     const SizedBox(width: 5),
@@ -319,7 +327,7 @@ class _TopPill extends StatelessWidget {
                       live
                           ? 'En vivo · $vehicles ${vehicles == 1 ? 'vehículo' : 'vehículos'}'
                           : 'Reconectando…',
-                      style: t.textTheme.labelSmall,
+                      style: t.textTheme.labelSmall?.copyWith(color: kOnBlueMuted),
                     ),
                   ],
                 ),

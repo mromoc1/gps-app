@@ -1,7 +1,7 @@
 name: gps_app
 description: SIRV GPS - prototipo de app para clientes (conectada a Traccar).
 publish_to: 'none'
-version: 0.10.1+1
+version: 0.10.2+1
 
 environment:
   sdk: '>=3.4.0 <4.0.0'

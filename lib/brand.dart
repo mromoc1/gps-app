@@ -11,6 +11,9 @@ const Color kBrandDeep = Color(0xFF0B2A6F);
 const Color kBrandAccent = Color(0xFF0EA5E9);
 const Color kBrandSky = Color(0xFF38BDF8);
 
+/// Texto e íconos secundarios sobre fondo azul (barras superior e inferior).
+const Color kOnBlueMuted = Color(0xFFBFD0F7);
+
 /// Degradado de la marca (logo e ícono de la app).
 const LinearGradient kBrandGradient = LinearGradient(
   begin: Alignment.topLeft,

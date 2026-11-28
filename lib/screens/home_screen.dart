@@ -102,7 +102,15 @@ class _FloatingNavBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
+    // Barra azul de la marca: elegido en blanco, el resto en celeste.
+    final navTheme = NavigationBarTheme.of(context).copyWith(
+      iconTheme: WidgetStateProperty.resolveWith((s) => IconThemeData(
+          color: s.contains(WidgetState.selected) ? Colors.white : kOnBlueMuted)),
+      labelTextStyle: WidgetStateProperty.resolveWith((s) => TextStyle(
+          fontSize: 12,
+          fontWeight: s.contains(WidgetState.selected) ? FontWeight.w600 : FontWeight.w500,
+          color: s.contains(WidgetState.selected) ? Colors.white : kOnBlueMuted)),
+    );
     return SafeArea(
       minimum: const EdgeInsets.fromLTRB(12, 0, 12, 12),
       child: DecoratedBox(
@@ -118,12 +126,15 @@ class _FloatingNavBar extends StatelessWidget {
           child: MediaQuery.removePadding(
             context: context,
             removeBottom: true,
-            child: NavigationBar(
+            child: NavigationBarTheme(
+              data: navTheme,
+              child: NavigationBar(
               height: kNavBarHeight,
               selectedIndex: index,
               onDestinationSelected: onChanged,
-              backgroundColor: scheme.surface.withValues(alpha: 0.97),
-              indicatorColor: scheme.primaryContainer,
+              backgroundColor: kBrandBlue,
+              surfaceTintColor: Colors.transparent,
+              indicatorColor: Colors.white.withValues(alpha: 0.22),
               labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
               destinations: const [
                 NavigationDestination(
@@ -147,6 +158,7 @@ class _FloatingNavBar extends StatelessWidget {
                   label: 'Perfil',
                 ),
               ],
+            ),
             ),
           ),
         ),
